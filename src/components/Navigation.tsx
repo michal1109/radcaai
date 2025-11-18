@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Scale } from "lucide-react";
+import { Menu, X, Bot } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import papugaLogo from "@/assets/papuga-3.png";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
 
   const navLinks = [
     { href: "#uslugi", label: "Usługi" },
@@ -17,7 +20,7 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3 group">
             <img 
               src={papugaLogo} 
               alt="Papuga Logo" 
@@ -27,11 +30,11 @@ const Navigation = () => {
               <p className="font-bold text-lg text-foreground leading-tight">Papuga</p>
               <p className="text-xs text-muted-foreground">Radca Prawny</p>
             </div>
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+          <div className="hidden md:flex items-center gap-6">
+            {isHomePage && navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -40,9 +43,17 @@ const Navigation = () => {
                 {link.label}
               </a>
             ))}
-            <Button size="lg" className="ml-4">
-              Umów konsultację
-            </Button>
+            <Link to="/ai-assistant">
+              <Button variant="outline" className="gap-2">
+                <Bot className="w-4 h-4" />
+                Asystent AI
+              </Button>
+            </Link>
+            {isHomePage && (
+              <Button size="lg">
+                Umów konsultację
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -57,7 +68,7 @@ const Navigation = () => {
         {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden py-6 space-y-4 border-t border-border">
-            {navLinks.map((link) => (
+            {isHomePage && navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -67,9 +78,17 @@ const Navigation = () => {
                 {link.label}
               </a>
             ))}
-            <Button size="lg" className="w-full">
-              Umów konsultację
-            </Button>
+            <Link to="/ai-assistant" onClick={() => setIsOpen(false)}>
+              <Button variant="outline" className="w-full gap-2">
+                <Bot className="w-4 h-4" />
+                Asystent AI
+              </Button>
+            </Link>
+            {isHomePage && (
+              <Button size="lg" className="w-full">
+                Umów konsultację
+              </Button>
+            )}
           </div>
         )}
       </div>

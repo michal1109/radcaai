@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { Scale, Phone, Mail } from "lucide-react";
+import { Scale, Phone, Mail, Bot } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import papugaLogo from "@/assets/papuga-logo.png";
 import papuga2 from "@/assets/papuga-2.png";
 import feathersBg from "@/assets/feathers-bg.png";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background with feathers */}
@@ -43,17 +46,18 @@ const Hero = () => {
               <Button 
                 size="lg" 
                 className="text-lg h-14 px-8 shadow-lg hover:shadow-xl transition-all"
+                onClick={() => navigate('/ai-assistant')}
               >
-                <Phone className="mr-2 h-5 w-5" />
-                Umów konsultację
+                <Bot className="mr-2 h-5 w-5" />
+                Asystent AI
               </Button>
               <Button 
                 size="lg" 
                 variant="outline"
                 className="text-lg h-14 px-8 border-2"
               >
-                <Mail className="mr-2 h-5 w-5" />
-                Kontakt
+                <Phone className="mr-2 h-5 w-5" />
+                Umów konsultację
               </Button>
             </div>
 

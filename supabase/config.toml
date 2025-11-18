@@ -1,1 +1,13 @@
 project_id = "xmoqyrcevbggoeoexzey"
+
+[functions.chat-ai]
+verify_jwt = false
+
+[functions.generate-voice]
+verify_jwt = false
+
+[functions.analyze-document]
+verify_jwt = false
+
+[functions.generate-document]
+verify_jwt = false
