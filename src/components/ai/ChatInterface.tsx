@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,13 +16,108 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<any[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  const loadConversations = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("conversations")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(10);
+
+      if (!error && data) {
+        setConversations(data);
+      }
+    } catch (error) {
+      console.error("Error loading conversations:", error);
+    }
+  };
+
+  const loadConversation = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", id)
+        .order("created_at", { ascending: true });
+
+      if (!error && data) {
+        setMessages(data.map(msg => ({ role: msg.role as "user" | "assistant", content: msg.content })));
+        setConversationId(id);
+      }
+    } catch (error) {
+      console.error("Error loading conversation:", error);
+    }
+  };
+
+  const createNewConversation = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("conversations")
+        .insert([{ user_id: user.id, title: "Nowa rozmowa" }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        setConversationId(data.id);
+        setMessages([]);
+        loadConversations();
+      }
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+    }
+  };
+
+  const saveMessage = async (role: "user" | "assistant", content: string) => {
+    try {
+      if (!conversationId) {
+        await createNewConversation();
+        return;
+      }
+
+      await supabase
+        .from("messages")
+        .insert([{
+          conversation_id: conversationId,
+          role,
+          content,
+        }]);
+
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+    } catch (error) {
+      console.error("Error saving message:", error);
+    }
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
+    if (!conversationId) {
+      await createNewConversation();
+      setTimeout(() => sendMessage(), 100);
+      return;
+    }
+
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
+    await saveMessage("user", input);
     setInput("");
     setIsLoading(true);
 
@@ -68,6 +163,11 @@ const ChatInterface = () => {
           }
         }
       }
+
+      if (assistantMessage) {
+        await saveMessage("assistant", assistantMessage);
+        loadConversations();
+      }
     } catch (error) {
       console.error("Chat error:", error);
       toast({
@@ -81,8 +181,33 @@ const ChatInterface = () => {
   };
 
   return (
-    <Card className="border-2 p-6">
-      <ScrollArea className="h-[500px] pr-4 mb-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <Card className="border-2 p-4 backdrop-blur-sm bg-card/95">
+        <div className="mb-4">
+          <Button onClick={createNewConversation} className="w-full" size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Nowa rozmowa
+          </Button>
+        </div>
+        <ScrollArea className="h-[500px]">
+          <div className="space-y-2">
+            {conversations.map((conv) => (
+              <Button
+                key={conv.id}
+                variant={conv.id === conversationId ? "default" : "ghost"}
+                className="w-full justify-start text-left"
+                size="sm"
+                onClick={() => loadConversation(conv.id)}
+              >
+                <div className="truncate">{conv.title}</div>
+              </Button>
+            ))}
+          </div>
+        </ScrollArea>
+      </Card>
+
+      <Card className="border-2 p-6 md:col-span-3 backdrop-blur-sm bg-card/95">
+        <ScrollArea className="h-[500px] pr-4 mb-4">
         <div className="space-y-4">
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-12">
@@ -121,7 +246,8 @@ const ChatInterface = () => {
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </div>
-    </Card>
+      </Card>
+    </div>
   );
 };
 
