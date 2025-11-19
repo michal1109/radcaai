@@ -49,28 +49,18 @@ const Index = () => {
   const features = [
     {
       icon: MessageSquare,
-      title: "Chat AI",
-      description: "Rozmowa z asystentem prawnym AI",
+      title: "Asystent AI",
+      description: "Czat tekstowy i głosowy z możliwością analizy dokumentów",
       tab: "chat",
-    },
-    {
-      icon: Mic,
-      title: "Asystent głosowy",
-      description: "Komunikacja głosowa z AI",
-      tab: "voice",
-    },
-    {
-      icon: FileSearch,
-      title: "Analiza dokumentów",
-      description: "Analiza i ocena dokumentów prawnych",
-      tab: "analyze",
+      color: "text-blue-500"
     },
     {
       icon: FileText,
-      title: "Generator dokumentów",
-      description: "Tworzenie dokumentów prawnych",
-      tab: "generate",
-    },
+      title: "Dokumenty prawne",
+      description: "Generuj i edytuj dokumenty prawne z gotowych szablonów",
+      tab: "documents",
+      color: "text-purple-500"
+    }
   ];
 
   const getTierName = (tier: string) => {
