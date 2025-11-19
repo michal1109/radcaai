@@ -4,6 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
+import Hero from "@/components/Hero";
+import Services from "@/components/Services";
+import About from "@/components/About";
+import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import { MessageSquare, Mic, FileSearch, FileText, LogOut } from "lucide-react";
 
@@ -80,24 +84,19 @@ const Index = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{
-        backgroundImage: `url('/src/assets/feathers-bg.png')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      }}
-    >
+    <div className="min-h-screen">
       <Navigation />
-      <main className="pt-32 pb-20 px-4">
+      <Hero />
+      
+      {/* AI Features Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/20">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12 backdrop-blur-sm bg-background/80 rounded-lg p-8">
-            <h1 className="text-5xl font-bold text-foreground mb-4">
-              Papuga Prawnik AI
-            </h1>
-            <p className="text-xl text-muted-foreground mb-2">
-              Twój inteligentny asystent prawny dostępny 24/7
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-foreground mb-4">
+              Funkcje Asystenta AI
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Wybierz narzędzie dostosowane do Twoich potrzeb
             </p>
             {!loading && subscription && (
               <div className="mt-4 inline-block">
@@ -112,7 +111,7 @@ const Index = () => {
             {features.map((feature) => (
               <Card
                 key={feature.tab}
-                className="p-8 hover:shadow-xl transition-all cursor-pointer backdrop-blur-sm bg-card/95 border-2 hover:border-primary"
+                className="p-8 hover:shadow-xl transition-all cursor-pointer bg-card border-2 hover:border-primary"
                 onClick={() => navigate(`/ai-assistant?tab=${feature.tab}`)}
               >
                 <div className="flex flex-col items-center text-center space-y-4">
@@ -134,7 +133,7 @@ const Index = () => {
           </div>
 
           {!loading && subscription && (
-            <Card className="p-6 backdrop-blur-sm bg-card/95 border-2">
+            <Card className="p-6 bg-card border-2">
               <h3 className="text-xl font-bold mb-4 text-foreground">Informacje o subskrypcji</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div>
@@ -169,7 +168,11 @@ const Index = () => {
             </Card>
           )}
         </div>
-      </main>
+      </section>
+
+      <Services />
+      <About />
+      <Contact />
       <Footer />
     </div>
   );
