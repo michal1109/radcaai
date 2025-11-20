@@ -1,12 +1,57 @@
 import { Button } from "@/components/ui/button";
 import { Scale, Phone, Mail, Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import papugaLogo from "@/assets/papuga-logo.png";
 import papuga2 from "@/assets/papuga-2.png";
+import papugaAvatar from "@/assets/papuga-avatar.png";
 import feathersBg from "@/assets/feathers-bg.png";
 
 const Hero = () => {
   const navigate = useNavigate();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>();
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.src = papugaAvatar;
+    
+    img.onload = () => {
+      let phase = 0;
+      const animate = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Subtle breathing animation
+        phase += 0.02;
+        const scale = 1 + Math.sin(phase) * 0.02;
+        
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(scale, scale);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        ctx.globalAlpha = 0.1;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+        
+        animationRef.current = requestAnimationFrame(animate);
+      };
+      
+      animate();
+    };
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -77,14 +122,15 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right Column - Mascot Image */}
+          {/* Right Column - Animated Avatar */}
           <div className="relative flex justify-center lg:justify-end">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-3xl" />
-              <img 
-                src={papuga2} 
-                alt="Papuga - Prywatny Radca Prawny" 
-                className="relative w-full max-w-md lg:max-w-lg h-auto drop-shadow-2xl animate-in fade-in zoom-in duration-700"
+              <canvas 
+                ref={canvasRef} 
+                width={500} 
+                height={500}
+                className="relative w-full max-w-md lg:max-w-lg drop-shadow-2xl animate-in fade-in zoom-in duration-700 rounded-full"
               />
             </div>
           </div>
