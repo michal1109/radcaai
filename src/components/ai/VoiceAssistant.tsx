@@ -1,106 +1,173 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Mic, Square, Volume2, Loader2 } from "lucide-react";
+import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import papugaAvatar from "@/assets/papuga-avatar.png";
 
-const VoiceAssistant = () => {
+interface VoiceAssistantProps {
+  onTranscript?: (text: string) => void;
+  isSpeaking?: boolean;
+  currentAudio?: string | null;
+}
+
+export const VoiceAssistant = ({ onTranscript, isSpeaking, currentAudio }: VoiceAssistantProps) => {
   const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [isMuted, setIsMuted] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>();
 
-  const startRecording = () => {
-    setIsRecording(true);
-    toast({
-      title: "Nagrywanie rozpoczęte",
-      description: "Mów teraz...",
-    });
+  // Lipsync animation
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.src = papugaAvatar;
+    
+    img.onload = () => {
+      const animate = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        if (isSpeaking && currentAudio) {
+          // Add mouth movement overlay
+          const mouthY = canvas.height * 0.65;
+          const mouthX = canvas.width * 0.5;
+          const mouthWidth = canvas.width * 0.15;
+          const openAmount = Math.sin(Date.now() / 100) * 10 + 10;
+          
+          ctx.fillStyle = 'rgba(255, 100, 0, 0.3)';
+          ctx.beginPath();
+          ctx.ellipse(mouthX, mouthY, mouthWidth, openAmount, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        animationRef.current = requestAnimationFrame(animate);
+      };
+      
+      animate();
+    };
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isSpeaking, currentAudio]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await transcribeAudio(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      toast.info("Nagrywanie rozpoczęte...");
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      toast.error("Nie można uzyskać dostępu do mikrofonu");
+    }
   };
 
-  const stopRecording = async () => {
-    setIsRecording(false);
-    setIsProcessing(true);
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      toast.info("Przetwarzanie nagrania...");
+    }
+  };
 
+  const transcribeAudio = async (audioBlob: Blob) => {
     try {
-      // Mock voice processing
-      const { data, error } = await supabase.functions.invoke("generate-voice", {
-        body: { text: "Witam, jak mogę Panu/Pani pomóc w sprawie prawnej?" },
-      });
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = async () => {
+        const base64Audio = reader.result as string;
+        
+        const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+          body: { audio: base64Audio.split(',')[1] }
+        });
 
-      if (error) throw error;
-
-      const audioBlob = Uint8Array.from(atob(data.audioContent), (c) => c.charCodeAt(0));
-      const blob = new Blob([audioBlob], { type: "audio/mpeg" });
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
-
-      toast({
-        title: "Odpowiedź gotowa",
-        description: "Odtwórz audio, aby usłyszeć odpowiedź",
-      });
+        if (error) throw error;
+        
+        if (data?.text && onTranscript) {
+          onTranscript(data.text);
+          toast.success("Transkrypcja zakończona");
+        }
+      };
     } catch (error) {
-      console.error("Voice error:", error);
-      toast({
-        title: "Błąd",
-        description: "Nie udało się przetworzyć nagrania",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
+      console.error("Transcription error:", error);
+      toast.error("Błąd transkrypcji audio");
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    if (audioRef.current) {
+      audioRef.current.muted = !isMuted;
     }
   };
 
   return (
-    <Card className="border-2 p-6">
-      <div className="flex flex-col items-center justify-center space-y-6 py-12">
-        <div className="text-center space-y-2">
-          <h3 className="text-2xl font-bold text-foreground">Asystent głosowy</h3>
-          <p className="text-muted-foreground">
-            Kliknij przycisk i zadaj pytanie prawne głosowo
-          </p>
-        </div>
-
-        <div className="relative">
-          <div
-            className={`w-32 h-32 rounded-full flex items-center justify-center ${
-              isRecording
-                ? "bg-destructive animate-pulse"
-                : "bg-primary"
-            } transition-all`}
-          >
-            {isProcessing ? (
-              <Loader2 className="w-16 h-16 text-primary-foreground animate-spin" />
-            ) : isRecording ? (
-              <Square className="w-16 h-16 text-primary-foreground" />
-            ) : (
-              <Mic className="w-16 h-16 text-primary-foreground" />
-            )}
-          </div>
-        </div>
-
-        <Button
-          size="lg"
-          onClick={isRecording ? stopRecording : startRecording}
-          disabled={isProcessing}
-          className="min-w-[200px]"
-        >
-          {isRecording ? "Zatrzymaj nagrywanie" : "Rozpocznij nagrywanie"}
-        </Button>
-
-        {audioUrl && (
-          <div className="w-full max-w-md space-y-4">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Volume2 className="w-5 h-5" />
-              <span>Odpowiedź asystenta:</span>
-            </div>
-            <audio controls src={audioUrl} className="w-full" />
-          </div>
+    <div className="flex flex-col items-center gap-4 p-6 bg-card rounded-lg border">
+      <div className="relative">
+        <canvas 
+          ref={canvasRef} 
+          width={200} 
+          height={200}
+          className="rounded-full border-4 border-primary shadow-lg"
+        />
+        {isSpeaking && (
+          <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full animate-pulse" />
         )}
       </div>
-    </Card>
+
+      <div className="flex gap-2">
+        <Button
+          onClick={isRecording ? stopRecording : startRecording}
+          variant={isRecording ? "destructive" : "default"}
+          size="lg"
+        >
+          {isRecording ? <MicOff className="mr-2" /> : <Mic className="mr-2" />}
+          {isRecording ? "Zatrzymaj" : "Mów"}
+        </Button>
+
+        <Button
+          onClick={toggleMute}
+          variant="outline"
+          size="lg"
+        >
+          {isMuted ? <VolumeX /> : <Volume2 />}
+        </Button>
+      </div>
+
+      {currentAudio && (
+        <audio 
+          ref={audioRef}
+          src={`data:audio/mpeg;base64,${currentAudio}`}
+          autoPlay
+          muted={isMuted}
+        />
+      )}
+    </div>
   );
 };
-
-export default VoiceAssistant;

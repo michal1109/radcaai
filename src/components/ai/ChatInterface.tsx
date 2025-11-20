@@ -5,8 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, Mic, MicOff, Loader2, Plus, Upload, Volume2, VolumeX, FileText } from "lucide-react";
+import { Send, Loader2, Plus, Upload, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { VoiceAssistant } from "./VoiceAssistant";
+import papugaAvatar from "@/assets/papuga-avatar.png";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,9 +23,9 @@ const ChatInterface = () => {
   const [conversations, setConversations] = useState<any[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [currentAudio, setCurrentAudio] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -68,14 +70,16 @@ const ChatInterface = () => {
     await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", currentConversationId);
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() && !uploadedFile) return;
+  const sendMessage = async (messageText?: string) => {
+    const textToSend = messageText || input;
+    if (!textToSend.trim() && !uploadedFile) return;
+    
     let conversationId = currentConversationId || await createNewConversation();
     if (!conversationId) return;
 
-    let messageContent = input;
+    let messageContent = textToSend;
     if (uploadedFile) {
-      messageContent = `[${uploadedFile.type.includes('image') ? 'OBRAZ' : 'PDF'}: ${uploadedFile.name}]\n\n${input || 'Przeanalizuj'}`;
+      messageContent = `[${uploadedFile.type.includes('image') ? 'OBRAZ' : 'PDF'}: ${uploadedFile.name}]\n\n${textToSend || 'Przeanalizuj'}`;
       setUploadedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -118,6 +122,32 @@ const ChatInterface = () => {
         }
       }
       await saveMessage("assistant", assistantMessage);
+
+      // Generate voice response if voice mode is enabled
+      if (isVoiceMode && assistantMessage) {
+        try {
+          setIsSpeaking(true);
+          const { data: voiceData, error: voiceError } = await supabase.functions.invoke(
+            "generate-voice",
+            { body: { text: assistantMessage } }
+          );
+
+          if (voiceError) {
+            console.error("Voice generation error:", voiceError);
+            setIsSpeaking(false);
+          } else if (voiceData?.audioContent) {
+            setCurrentAudio(voiceData.audioContent);
+            // Audio will auto-play through VoiceAssistant component
+            setTimeout(() => {
+              setIsSpeaking(false);
+              setCurrentAudio(null);
+            }, assistantMessage.length * 50); // Approximate duration
+          }
+        } catch (voiceError) {
+          console.error("Voice generation failed:", voiceError);
+          setIsSpeaking(false);
+        }
+      }
     } catch (error) {
       toast({ title: "Błąd", description: "Nie udało się wysłać wiadomości", variant: "destructive" });
     } finally {
@@ -143,7 +173,7 @@ const ChatInterface = () => {
           <h3 className="font-semibold text-lg">Asystent AI Papuga</h3>
           <div className="flex gap-2">
             <Button variant={isVoiceMode ? "default" : "outline"} size="sm" onClick={() => setIsVoiceMode(!isVoiceMode)}>
-              {isVoiceMode ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              {isVoiceMode ? "Wyłącz głos" : "Włącz głos"}
             </Button>
             <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><Upload className="w-4 h-4" /></Button>
             <Input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => {
@@ -156,10 +186,30 @@ const ChatInterface = () => {
           </div>
         </div>
 
+        {isVoiceMode && (
+          <div className="mb-4">
+            <VoiceAssistant 
+              onTranscript={(text) => {
+                setInput(text);
+                sendMessage(text);
+              }}
+              isSpeaking={isSpeaking}
+              currentAudio={currentAudio}
+            />
+          </div>
+        )}
+
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4 pb-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                {msg.role === "assistant" && (
+                  <img 
+                    src={papugaAvatar} 
+                    alt="Papuga" 
+                    className="w-8 h-8 rounded-full mr-2 mt-1"
+                  />
+                )}
                 <div className={`max-w-[80%] p-4 rounded-lg ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 </div>
@@ -181,10 +231,7 @@ const ChatInterface = () => {
           <Textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
           }} placeholder="Napisz wiadomość lub załącz obraz/PDF..." className="min-h-[60px] resize-none" disabled={isLoading} />
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" size="icon" disabled><Mic className="w-5 h-5" /></Button>
-            <Button onClick={sendMessage} disabled={isLoading || (!input.trim() && !uploadedFile)} size="icon"><Send className="w-5 h-5" /></Button>
-          </div>
+          <Button onClick={() => sendMessage()} disabled={isLoading || (!input.trim() && !uploadedFile)} size="icon"><Send className="w-5 h-5" /></Button>
         </div>
       </Card>
     </div>
