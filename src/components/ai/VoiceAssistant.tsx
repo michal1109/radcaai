@@ -4,6 +4,7 @@ import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import papugaAvatar from "@/assets/papuga-avatar.png";
+import { LipsyncAnimator } from "@/utils/lipsyncAnimator";
 
 interface VoiceAssistantProps {
   onTranscript?: (text: string) => void;
@@ -18,48 +19,66 @@ export const VoiceAssistant = ({ onTranscript, isSpeaking, currentAudio }: Voice
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const lipsyncAnimatorRef = useRef<LipsyncAnimator | null>(null);
+  const avatarImageRef = useRef<HTMLImageElement | null>(null);
 
-  // Lipsync animation
+  // Initialize avatar and lipsync
   useEffect(() => {
     if (!canvasRef.current) return;
     
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
     const img = new Image();
     img.src = papugaAvatar;
+    avatarImageRef.current = img;
     
     img.onload = () => {
-      const animate = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        if (isSpeaking && currentAudio) {
-          // Add mouth movement overlay
-          const mouthY = canvas.height * 0.65;
-          const mouthX = canvas.width * 0.5;
-          const mouthWidth = canvas.width * 0.15;
-          const openAmount = Math.sin(Date.now() / 100) * 10 + 10;
-          
-          ctx.fillStyle = 'rgba(255, 100, 0, 0.3)';
-          ctx.beginPath();
-          ctx.ellipse(mouthX, mouthY, mouthWidth, openAmount, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        
-        animationRef.current = requestAnimationFrame(animate);
-      };
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       
-      animate();
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Draw initial avatar
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Initialize lipsync animator
+      lipsyncAnimatorRef.current = new LipsyncAnimator(canvas, img);
     };
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      lipsyncAnimatorRef.current?.stop();
+    };
+  }, []);
+
+  // Handle audio playback with lipsync
+  useEffect(() => {
+    const syncAudioWithLipsync = async () => {
+      if (!currentAudio || !isSpeaking) {
+        lipsyncAnimatorRef.current?.stop();
+        return;
+      }
+
+      try {
+        // Get lipsync data from Papuga Lipsync API
+        const { data: lipsyncData, error } = await supabase.functions.invoke(
+          "papuga-lipsync",
+          { body: { audioBase64: currentAudio } }
+        );
+
+        if (error) {
+          console.error("Lipsync error:", error);
+          return;
+        }
+
+        if (lipsyncData?.visemes && lipsyncAnimatorRef.current) {
+          lipsyncAnimatorRef.current.loadVisemes(lipsyncData.visemes);
+          lipsyncAnimatorRef.current.start();
+        }
+      } catch (error) {
+        console.error("Failed to sync lipsync:", error);
       }
     };
+
+    syncAudioWithLipsync();
   }, [isSpeaking, currentAudio]);
 
   const startRecording = async () => {
