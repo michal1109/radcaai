@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Bot } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import papugaLogo from "@/assets/papuga-3.png";
+import papugaLogo from "@/assets/papuga-logo-new.png";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +24,7 @@ const Navigation = () => {
             <img 
               src={papugaLogo} 
               alt="Papuga Logo" 
-              className="h-16 w-auto transition-transform group-hover:scale-105"
+              className="h-24 w-auto transition-transform group-hover:scale-105"
             />
             <div className="hidden sm:block">
               <p className="font-bold text-lg text-foreground leading-tight">Papuga</p>
