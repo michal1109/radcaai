@@ -12,7 +12,7 @@ const Hero = () => {
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background with feathers */}
       <div 
-        className="absolute inset-0 opacity-30"
+        className="absolute inset-0 opacity-50"
         style={{
           backgroundImage: `url(${feathersBg})`,
           backgroundSize: 'cover',
