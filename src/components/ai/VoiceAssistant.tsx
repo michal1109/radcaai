@@ -34,6 +34,11 @@ export const VoiceAssistant = ({ onTranscript, isSpeaking, currentAudio }: Voice
       const canvas = canvasRef.current;
       if (!canvas) return;
       
+      // Set canvas dimensions to match image aspect ratio
+      const aspectRatio = img.width / img.height;
+      canvas.width = 200;
+      canvas.height = 200 / aspectRatio;
+      
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       
@@ -150,10 +155,8 @@ export const VoiceAssistant = ({ onTranscript, isSpeaking, currentAudio }: Voice
     <div className="flex flex-col items-center gap-4 p-6 bg-card rounded-lg border">
       <div className="relative">
         <canvas 
-          ref={canvasRef} 
-          width={200} 
-          height={200}
-          className="rounded-full border-4 border-primary shadow-lg"
+          ref={canvasRef}
+          className="rounded-full border-4 border-primary shadow-lg max-w-[200px]"
         />
         {isSpeaking && (
           <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full animate-pulse" />
