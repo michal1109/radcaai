@@ -3,7 +3,7 @@ import { Scale, Phone, Mail, Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import papugaLogo from "@/assets/papuga-logo.png";
 import papuga2 from "@/assets/papuga-2.png";
-import feathersBg from "@/assets/feathers-bg.png";
+import feathersBg from "@/assets/feathers-bg-new.png";
 
 const Hero = () => {
   const navigate = useNavigate();
