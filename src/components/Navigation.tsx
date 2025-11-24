@@ -10,9 +10,9 @@ const Navigation = () => {
   const isHomePage = location.pathname === "/";
 
   const navLinks = [
-    { href: "#uslugi", label: "Usługi" },
-    { href: "#o-nas", label: "O nas" },
-    { href: "#kontakt", label: "Kontakt" },
+    { href: "#services", label: "Funkcje" },
+    { href: "#about", label: "O asystencie" },
+    { href: "#contact", label: "Kontakt" },
   ];
 
   return (
@@ -50,9 +50,11 @@ const Navigation = () => {
               </Button>
             </Link>
             {isHomePage && (
-              <Button size="lg">
-                Umów konsultację
-              </Button>
+              <Link to="/ai-assistant">
+                <Button size="lg">
+                  Zadaj pytanie prawne
+                </Button>
+              </Link>
             )}
           </div>
 
@@ -85,9 +87,11 @@ const Navigation = () => {
               </Button>
             </Link>
             {isHomePage && (
-              <Button size="lg" className="w-full">
-                Umów konsultację
-              </Button>
+              <Link to="/ai-assistant" onClick={() => setIsOpen(false)}>
+                <Button size="lg" className="w-full">
+                  Zadaj pytanie prawne
+                </Button>
+              </Link>
             )}
           </div>
         )}
