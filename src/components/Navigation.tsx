@@ -24,7 +24,7 @@ const Navigation = () => {
             <img 
               src={papugaLogo} 
               alt="Papuga Logo" 
-              className="h-24 w-auto transition-transform group-hover:scale-105"
+              className="h-24 w-auto transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 group-hover:drop-shadow-[0_0_20px_hsl(var(--primary)/0.6)]"
             />
             <div className="hidden sm:block">
               <p className="font-bold text-lg text-foreground leading-tight">Papuga</p>
