@@ -1,4 +1,5 @@
-import { Scale, Phone, Mail, MapPin } from "lucide-react";
+import { Bot, Phone, Mail, MessageSquare } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -8,14 +9,14 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Scale className="w-8 h-8 text-primary" />
+              <Bot className="w-8 h-8 text-primary" />
               <div>
                 <p className="font-bold text-lg">Papuga</p>
-                <p className="text-sm opacity-80">Radca Prawny</p>
+                <p className="text-sm opacity-80">Asystent Prawny AI</p>
               </div>
             </div>
             <p className="text-sm opacity-80">
-              Profesjonalna pomoc prawna dla firm i osób prywatnych
+              Inteligentna pomoc prawna dostępna 24/7
             </p>
           </div>
 
@@ -24,31 +25,36 @@ const Footer = () => {
             <h3 className="font-semibold text-lg mb-4">Nawigacja</h3>
             <ul className="space-y-2 text-sm opacity-80">
               <li>
-                <a href="#uslugi" className="hover:text-primary transition-colors">
-                  Usługi
+                <a href="#services" className="hover:text-primary transition-colors">
+                  Funkcje
                 </a>
               </li>
               <li>
-                <a href="#o-nas" className="hover:text-primary transition-colors">
-                  O nas
+                <a href="#about" className="hover:text-primary transition-colors">
+                  O asystencie
                 </a>
               </li>
               <li>
-                <a href="#kontakt" className="hover:text-primary transition-colors">
+                <a href="#contact" className="hover:text-primary transition-colors">
                   Kontakt
                 </a>
+              </li>
+              <li>
+                <Link to="/ai-assistant" className="hover:text-primary transition-colors">
+                  Uruchom asystenta
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Features */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Usługi</h3>
+            <h3 className="font-semibold text-lg mb-4">Funkcje AI</h3>
             <ul className="space-y-2 text-sm opacity-80">
-              <li>Prawo gospodarcze</li>
-              <li>Prawo cywilne</li>
-              <li>Prawo nieruchomości</li>
-              <li>Reprezentacja sądowa</li>
+              <li>Porady prawne</li>
+              <li>Generowanie dokumentów</li>
+              <li>Analiza sprawy</li>
+              <li>Analiza dokumentów</li>
             </ul>
           </div>
 
@@ -68,16 +74,21 @@ const Footer = () => {
                   kontakt@papuga-radca.pl
                 </a>
               </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>ul. Przykładowa 123<br />00-000 Warszawa</span>
+              <li className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                <Link to="/ai-assistant" className="hover:text-primary transition-colors">
+                  Czat z AI
+                </Link>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-background/20 pt-8 text-center text-sm opacity-80">
-          <p>&copy; {new Date().getFullYear()} Papuga - Prywatny Radca Prawny. Wszelkie prawa zastrzeżone.</p>
+          <p>&copy; {new Date().getFullYear()} Papuga - Asystent Prawny AI. Wszelkie prawa zastrzeżone.</p>
+          <p className="mt-2 text-xs opacity-60">
+            Porady mają charakter informacyjny i nie zastępują konsultacji z prawnikiem
+          </p>
         </div>
       </div>
     </footer>

@@ -1,81 +1,87 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Briefcase, 
-  FileText, 
-  Home, 
-  Users, 
-  Building2, 
-  Gavel 
-} from "lucide-react";
+import { MessageSquare, FileText, BarChart3, Phone } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import papuga1 from "@/assets/papuga-1.png";
+import papuga2 from "@/assets/papuga-2.png";
+import papuga3 from "@/assets/papuga-3.png";
 
 const services = [
   {
-    icon: Briefcase,
-    title: "Prawo gospodarcze",
-    description: "Obsługa prawna firm, kontrakty, umowy handlowe i doradztwo biznesowe."
+    icon: MessageSquare,
+    image: papuga1,
+    title: "Porady prawne",
+    description: "Zadawaj pytania i otrzymuj odpowiedzi na problematyczne kwestie prawne"
   },
   {
     icon: FileText,
-    title: "Prawo cywilne",
-    description: "Sprawy spadkowe, rodzinne, zobowiązania i odszkodowania."
+    image: papuga2,
+    title: "Generowanie dokumentów",
+    description: "Twórz pozwy, wnioski i inne dokumenty prawne"
   },
   {
-    icon: Home,
-    title: "Prawo nieruchomości",
-    description: "Transakcje kupna-sprzedaży, dzierżawy i zarządzanie nieruchomościami."
+    icon: BarChart3,
+    image: papuga3,
+    title: "Analiza sprawy",
+    description: "Oceń szanse wygranej i poznaj możliwe scenariusze"
   },
   {
-    icon: Users,
-    title: "Prawo pracy",
-    description: "Umowy o pracę, spory pracownicze i doradztwo dla pracodawców."
-  },
-  {
-    icon: Building2,
-    title: "Prawo budowlane",
-    description: "Pozwolenia, inwestycje budowlane i sprawy administracyjne."
-  },
-  {
-    icon: Gavel,
-    title: "Reprezentacja sądowa",
-    description: "Profesjonalna reprezentacja w postępowaniach sądowych i arbitrażowych."
+    icon: Phone,
+    image: papuga1,
+    title: "Analiza dokumentów",
+    description: "Prześlij dokumenty w formie zdjęć lub PDF do analizy"
   }
 ];
 
 const Services = () => {
   return (
-    <section id="uslugi" className="py-24 bg-muted/30">
+    <section id="services" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl lg:text-5xl font-bold text-foreground">
-            Zakres usług
-          </h2>
+        <div className="text-center mb-16 animate-fade-in">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">Funkcje Asystenta AI</h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Oferujemy kompleksową obsługę prawną w szerokim zakresie dziedzin prawa
+            Kompleksowa pomoc prawna wspierana sztuczną inteligencją
           </p>
         </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {services.map((service, index) => (
+            <Card 
+              key={index} 
+              className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-delayed bg-primary/90 text-primary-foreground border-none"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <CardHeader>
+                <div className="w-20 h-20 mx-auto mb-4">
+                  <img 
+                    src={service.image} 
+                    alt={service.title}
+                    className="w-full h-full object-contain drop-shadow-lg"
+                  />
+                </div>
+                <CardTitle className="text-2xl text-center">{service.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base text-center text-primary-foreground/90">
+                  {service.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service, index) => {
-            const Icon = service.icon;
-            return (
-              <Card 
-                key={index}
-                className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg group"
-              >
-                <CardHeader>
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-7 h-7 text-primary" />
-                  </div>
-                  <CardTitle className="text-xl">{service.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    {service.description}
+        <div className="mt-16 max-w-3xl mx-auto">
+          <Card className="bg-yellow-500/20 border-yellow-500/50">
+            <CardHeader>
+              <div className="flex items-start gap-3">
+                <span className="text-3xl">⚠️</span>
+                <div>
+                  <CardTitle className="text-xl mb-2">Ważne</CardTitle>
+                  <CardDescription className="text-base text-foreground/80">
+                    Papuga to wirtualny asystent prawny. Porady mają charakter informacyjny i nie zastępują konsultacji z prawnikiem.
                   </CardDescription>
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
         </div>
       </div>
     </section>

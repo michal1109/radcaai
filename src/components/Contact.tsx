@@ -11,10 +11,10 @@ const Contact = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-4xl lg:text-5xl font-bold text-foreground">
-            Skontaktuj się z nami
+            Potrzebujesz dodatkowej pomocy?
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Jesteśmy do Twojej dyspozycji. Skontaktuj się z nami już dziś!
+            Skontaktuj się z nami, aby uzyskać dodatkowe informacje o asystencie AI
           </p>
         </div>
 
