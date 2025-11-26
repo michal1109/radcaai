@@ -29,10 +29,10 @@ const Hero = () => {
               Uzyskaj profesjonalne porady prawne, generuj dokumenty i analizuj sprawy sądowe z pomocą sztucznej inteligencji opartej na polskim prawie
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link to="/ai-assistant">
+              <Link to="/auth">
                 <Button 
                   size="lg" 
-                  className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all"
+                  className="text-lg px-8 py-6 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,48%)] text-white shadow-lg hover:shadow-xl transition-all"
                 >
                   Zadaj pytanie prawne
                 </Button>
@@ -41,7 +41,7 @@ const Hero = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="text-lg px-8 py-6 border-2 border-white text-white hover:bg-white/10 shadow-lg"
+                  className="text-lg px-8 py-6 border-2 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,48%)] text-white border-[hsl(25,95%,53%)] hover:border-[hsl(25,95%,48%)] shadow-lg"
                 >
                   Zobacz funkcje
                 </Button>
