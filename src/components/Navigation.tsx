@@ -43,15 +43,15 @@ const Navigation = () => {
                 {link.label}
               </a>
             ))}
-            <Link to="/ai-assistant">
+            <Link to="/auth">
               <Button variant="outline" className="gap-2">
                 <Bot className="w-4 h-4" />
                 Asystent AI
               </Button>
             </Link>
             {isHomePage && (
-              <Link to="/ai-assistant">
-                <Button size="lg">
+              <Link to="/auth">
+                <Button size="lg" className="bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,48%)]">
                   Zadaj pytanie prawne
                 </Button>
               </Link>
@@ -80,15 +80,15 @@ const Navigation = () => {
                 {link.label}
               </a>
             ))}
-            <Link to="/ai-assistant" onClick={() => setIsOpen(false)}>
+            <Link to="/auth" onClick={() => setIsOpen(false)}>
               <Button variant="outline" className="w-full gap-2">
                 <Bot className="w-4 h-4" />
                 Asystent AI
               </Button>
             </Link>
             {isHomePage && (
-              <Link to="/ai-assistant" onClick={() => setIsOpen(false)}>
-                <Button size="lg" className="w-full">
+              <Link to="/auth" onClick={() => setIsOpen(false)}>
+                <Button size="lg" className="w-full bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,48%)]">
                   Zadaj pytanie prawne
                 </Button>
               </Link>
