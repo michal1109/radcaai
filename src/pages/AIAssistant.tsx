@@ -5,7 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ConversationHistory from "@/components/ConversationHistory";
 import ChatInterface from "@/components/ai/ChatInterface";
-import VoiceAssistant from "@/components/ai/VoiceAssistant";
+
 import DocumentAnalyzer from "@/components/ai/DocumentAnalyzer";
 import DocumentGenerator from "@/components/ai/DocumentGenerator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -105,9 +105,8 @@ const AIAssistant = () => {
           {/* Main Content */}
           <div className="md:col-span-3">
             <Tabs defaultValue="chat" className="h-full">
-              <TabsList className="grid w-full grid-cols-4 mb-4">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
                 <TabsTrigger value="chat">Czat AI</TabsTrigger>
-                <TabsTrigger value="voice">Głos</TabsTrigger>
                 <TabsTrigger value="analyze">Analiza</TabsTrigger>
                 <TabsTrigger value="generate">Generuj</TabsTrigger>
               </TabsList>
@@ -117,10 +116,6 @@ const AIAssistant = () => {
                   conversationId={currentConversationId}
                   onConversationCreated={setCurrentConversationId}
                 />
-              </TabsContent>
-
-              <TabsContent value="voice" className="h-[calc(100%-60px)]">
-                <VoiceAssistant />
               </TabsContent>
 
               <TabsContent value="analyze" className="h-[calc(100%-60px)]">

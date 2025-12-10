@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, Volume2, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
+import { Loader2, Send, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 
 type Message = {
   id?: string;
@@ -24,7 +24,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [generatingAudio, setGeneratingAudio] = useState<string | null>(null);
+  
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,29 +127,6 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     return analyses.join("\n\n");
   };
 
-  const generateVoice = async (text: string, messageIndex: number) => {
-    setGeneratingAudio(`${messageIndex}`);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-voice", {
-        body: { text },
-      });
-
-      if (error) throw error;
-
-      if (data?.audioUrl) {
-        const audio = new Audio(data.audioUrl);
-        audio.play();
-      }
-    } catch (error: any) {
-      toast({
-        title: "Błąd",
-        description: "Nie udało się wygenerować głosu",
-        variant: "destructive",
-      });
-    } finally {
-      setGeneratingAudio(null);
-    }
-  };
 
   const sendMessage = async () => {
     if ((!input.trim() && uploadedFiles.length === 0) || isLoading) return;
@@ -307,22 +284,6 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
                   }`}
                 >
                   <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                  {message.role === "assistant" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2 gap-2"
-                      onClick={() => generateVoice(message.content, index)}
-                      disabled={generatingAudio === `${index}`}
-                    >
-                      {generatingAudio === `${index}` ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Volume2 className="w-4 h-4" />
-                      )}
-                      Wygeneruj głos
-                    </Button>
-                  )}
                 </div>
               </div>
             ))}
