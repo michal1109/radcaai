@@ -204,21 +204,30 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
 
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
+      let textBuffer = "";
+      
       while (true) {
         const { done, value } = await reader!.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        textBuffer += decoder.decode(value, { stream: true });
+        
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") continue;
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
 
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
               assistantMessage += content;
               setMessages((prev) => {
                 const newMessages = [...prev];
@@ -228,9 +237,11 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
                 };
                 return newMessages;
               });
-            } catch (e) {
-              // Skip invalid JSON
             }
+          } catch (e) {
+            // Re-buffer partial JSON
+            textBuffer = line + "\n" + textBuffer;
+            break;
           }
         }
       }
