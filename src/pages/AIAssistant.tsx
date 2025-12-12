@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -17,6 +17,8 @@ const AIAssistant = () => {
   const [user, setUser] = useState<any>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "chat";
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -104,7 +106,7 @@ const AIAssistant = () => {
 
           {/* Main Content */}
           <div className="md:col-span-3">
-            <Tabs defaultValue="chat" className="h-full">
+            <Tabs defaultValue={defaultTab} className="h-full">
               <TabsList className="grid w-full grid-cols-3 mb-4">
                 <TabsTrigger value="chat">Czat AI</TabsTrigger>
                 <TabsTrigger value="analyze">Analiza</TabsTrigger>
