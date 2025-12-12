@@ -156,13 +156,19 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     await saveMessage(currentConvId, "user", fullUserMessage);
 
     try {
+      // Get user's session token for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Musisz być zalogowany, aby korzystać z czatu");
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-ai`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             messages: [...messages, newUserMessage].map((m) => ({
@@ -173,7 +179,10 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
         }
       );
 
-      if (!response.ok) throw new Error("Failed to get response");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Błąd połączenia z AI");
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
