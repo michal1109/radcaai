@@ -1,5 +1,6 @@
 import { MessageSquare, FileText, BarChart3, Phone } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { useNavigate } from "react-router-dom";
 import papuga1 from "@/assets/papuga-1.png";
 import papuga2 from "@/assets/papuga-2.png";
 import papuga3 from "@/assets/papuga-3.png";
@@ -9,29 +10,39 @@ const services = [
     icon: MessageSquare,
     image: papuga1,
     title: "Porady prawne",
-    description: "Zadawaj pytania i otrzymuj odpowiedzi na problematyczne kwestie prawne"
+    description: "Zadawaj pytania i otrzymuj odpowiedzi na problematyczne kwestie prawne",
+    tab: "chat"
   },
   {
     icon: FileText,
     image: papuga2,
     title: "Generowanie dokumentów",
-    description: "Twórz pozwy, wnioski i inne dokumenty prawne"
+    description: "Twórz pozwy, wnioski i inne dokumenty prawne",
+    tab: "generate"
   },
   {
     icon: BarChart3,
     image: papuga3,
     title: "Analiza sprawy",
-    description: "Oceń szanse wygranej i poznaj możliwe scenariusze"
+    description: "Oceń szanse wygranej i poznaj możliwe scenariusze",
+    tab: "chat"
   },
   {
     icon: Phone,
     image: papuga1,
     title: "Analiza dokumentów",
-    description: "Prześlij dokumenty w formie zdjęć lub PDF do analizy"
+    description: "Prześlij dokumenty w formie zdjęć lub PDF do analizy",
+    tab: "analyze"
   }
 ];
 
 const Services = () => {
+  const navigate = useNavigate();
+
+  const handleCardClick = (tab: string) => {
+    navigate(`/ai-assistant?tab=${tab}`);
+  };
+
   return (
     <section id="services" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -46,8 +57,9 @@ const Services = () => {
           {services.map((service, index) => (
             <Card 
               key={index} 
-              className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-delayed bg-primary/90 text-primary-foreground border-none"
+              className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-delayed bg-primary/90 text-primary-foreground border-none cursor-pointer"
               style={{ animationDelay: `${index * 100}ms` }}
+              onClick={() => handleCardClick(service.tab)}
             >
               <CardHeader>
                 <div className="w-20 h-20 mx-auto mb-4">
