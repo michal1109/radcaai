@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileSearch, Upload, X, FileImage, FileText } from "lucide-react";
+import { Loader2, FileSearch, Upload, X, FileImage, FileText, ScanText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +19,7 @@ const DocumentAnalyzer = () => {
   const [analysisType, setAnalysisType] = useState("legal");
   const [analysis, setAnalysis] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -47,7 +48,6 @@ const DocumentAnalyzer = () => {
       return;
     }
 
-    // Convert file to base64
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
@@ -70,6 +70,51 @@ const DocumentAnalyzer = () => {
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) return <FileImage className="w-8 h-8 text-primary" />;
     return <FileText className="w-8 h-8 text-primary" />;
+  };
+
+  const extractTextFromImage = async () => {
+    if (!uploadedFile || !uploadedFile.file.type.startsWith('image/')) {
+      toast({
+        title: "Błąd",
+        description: "OCR działa tylko dla plików graficznych (JPG, PNG)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExtracting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-text-ocr", {
+        body: { imageBase64: uploadedFile.base64 },
+      });
+
+      if (error) throw error;
+
+      if (data.text) {
+        setContent(data.text);
+        removeFile();
+        toast({
+          title: "Tekst wyodrębniony",
+          description: "Tekst z obrazu został rozpoznany i wklejony do pola tekstowego",
+        });
+      } else {
+        toast({
+          title: "Brak tekstu",
+          description: "Nie udało się rozpoznać tekstu na obrazie",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("OCR error:", error);
+      toast({
+        title: "Błąd OCR",
+        description: "Nie udało się rozpoznać tekstu z obrazu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   const analyzeDocument = async () => {
@@ -118,6 +163,8 @@ const DocumentAnalyzer = () => {
     }
   };
 
+  const isImageFile = uploadedFile?.file.type.startsWith('image/');
+
   return (
     <Card className="border-2 p-6">
       <div className="space-y-6">
@@ -160,25 +207,49 @@ const DocumentAnalyzer = () => {
               </p>
             </div>
           ) : (
-            <div className="border rounded-lg p-4 flex items-center gap-4">
-              {uploadedFile.preview ? (
-                <img 
-                  src={uploadedFile.preview} 
-                  alt="Preview" 
-                  className="w-16 h-16 object-cover rounded"
-                />
-              ) : (
-                getFileIcon(uploadedFile.file.type)
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{uploadedFile.file.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {(uploadedFile.file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
+            <div className="border rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-4">
+                {uploadedFile.preview ? (
+                  <img 
+                    src={uploadedFile.preview} 
+                    alt="Preview" 
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                ) : (
+                  getFileIcon(uploadedFile.file.type)
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{uploadedFile.file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(uploadedFile.file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={removeFile}>
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="icon" onClick={removeFile}>
-                <X className="w-4 h-4" />
-              </Button>
+              
+              {/* OCR Button for images */}
+              {isImageFile && (
+                <Button 
+                  variant="outline" 
+                  onClick={extractTextFromImage} 
+                  disabled={isExtracting}
+                  className="w-full"
+                >
+                  {isExtracting ? (
+                    <>
+                      <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                      Rozpoznawanie tekstu...
+                    </>
+                  ) : (
+                    <>
+                      <ScanText className="mr-2 w-4 h-4" />
+                      Wyodrębnij tekst (OCR)
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           )}
         </div>
