@@ -1,25 +1,82 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileSearch } from "lucide-react";
+import { Loader2, FileSearch, Upload, X, FileImage, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+interface UploadedFile {
+  file: File;
+  preview?: string;
+  base64?: string;
+}
 
 const DocumentAnalyzer = () => {
   const [content, setContent] = useState("");
   const [analysisType, setAnalysisType] = useState("legal");
   const [analysis, setAnalysis] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const analyzeDocument = async () => {
-    if (!content.trim()) {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    
+    if (!allowedTypes.includes(file.type)) {
       toast({
         title: "Błąd",
-        description: "Proszę wpisać treść dokumentu",
+        description: "Dozwolone formaty: JPG, PNG, PDF, DOC, DOCX",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "Błąd",
+        description: "Maksymalny rozmiar pliku to 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Convert file to base64
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setUploadedFile({
+        file,
+        preview: file.type.startsWith('image/') ? base64 : undefined,
+        base64
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) return <FileImage className="w-8 h-8 text-primary" />;
+    return <FileText className="w-8 h-8 text-primary" />;
+  };
+
+  const analyzeDocument = async () => {
+    if (!content.trim() && !uploadedFile) {
+      toast({
+        title: "Błąd",
+        description: "Wpisz treść dokumentu lub dodaj plik",
         variant: "destructive",
       });
       return;
@@ -29,8 +86,17 @@ const DocumentAnalyzer = () => {
     setAnalysis("");
 
     try {
+      const body: any = { analysisType };
+      
+      if (uploadedFile) {
+        body.fileContent = uploadedFile.base64;
+        body.fileType = uploadedFile.file.type;
+      } else {
+        body.content = content;
+      }
+
       const { data, error } = await supabase.functions.invoke("analyze-document", {
-        body: { content, analysisType },
+        body,
       });
 
       if (error) throw error;
@@ -69,6 +135,60 @@ const DocumentAnalyzer = () => {
           </Select>
         </div>
 
+        {/* File Upload Section */}
+        <div className="space-y-2">
+          <Label>Prześlij dokument (JPG, PNG, PDF, DOC)</Label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          
+          {!uploadedFile ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+            >
+              <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Kliknij aby przesłać plik lub przeciągnij i upuść
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                JPG, PNG, PDF, DOC, DOCX (max 10MB)
+              </p>
+            </div>
+          ) : (
+            <div className="border rounded-lg p-4 flex items-center gap-4">
+              {uploadedFile.preview ? (
+                <img 
+                  src={uploadedFile.preview} 
+                  alt="Preview" 
+                  className="w-16 h-16 object-cover rounded"
+                />
+              ) : (
+                getFileIcon(uploadedFile.file.type)
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{uploadedFile.file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(uploadedFile.file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={removeFile}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="relative flex items-center">
+          <div className="flex-1 border-t border-muted-foreground/25"></div>
+          <span className="px-3 text-xs text-muted-foreground">lub wpisz treść</span>
+          <div className="flex-1 border-t border-muted-foreground/25"></div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="document">Treść dokumentu</Label>
           <Textarea
@@ -76,7 +196,8 @@ const DocumentAnalyzer = () => {
             placeholder="Wklej tutaj treść dokumentu do analizy..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[200px]"
+            className="min-h-[150px]"
+            disabled={!!uploadedFile}
           />
         </div>
 
