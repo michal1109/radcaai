@@ -7,11 +7,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Send, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 
+type UploadedFileData = {
+  name: string;
+  type: string;
+  preview?: string; // Base64 preview for images
+};
+
 type Message = {
   id?: string;
   role: "user" | "assistant";
   content: string;
   audio_url?: string;
+  files?: UploadedFileData[];
 };
 
 interface ChatInterfaceProps {
@@ -111,13 +118,17 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     const analyses = [];
     for (const file of files) {
       const reader = new FileReader();
-      const content = await new Promise<string>((resolve) => {
+      const base64Content = await new Promise<string>((resolve) => {
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(file);
       });
 
       const { data, error } = await supabase.functions.invoke("analyze-document", {
-        body: { content, analysisType: "legal" },
+        body: { 
+          fileContent: base64Content, 
+          fileType: file.type,
+          analysisType: "legal" 
+        },
       });
 
       if (!error && data?.analysis) {
@@ -125,6 +136,23 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
       }
     }
     return analyses.join("\n\n");
+  };
+
+  const getFilePreviews = async (files: File[]): Promise<UploadedFileData[]> => {
+    const previews: UploadedFileData[] = [];
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        const preview = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        previews.push({ name: file.name, type: file.type, preview });
+      } else {
+        previews.push({ name: file.name, type: file.type });
+      }
+    }
+    return previews;
   };
 
 
@@ -145,13 +173,20 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     }
 
     let fullUserMessage = userMessage;
+    let filePreviews: UploadedFileData[] = [];
+    
     if (uploadedFiles.length > 0) {
+      filePreviews = await getFilePreviews(uploadedFiles);
       const documentAnalysis = await analyzeDocuments(uploadedFiles);
       fullUserMessage = `${userMessage}\n\nDokumenty do analizy:\n${documentAnalysis}`;
       setUploadedFiles([]);
     }
 
-    const newUserMessage: Message = { role: "user", content: userMessage };
+    const newUserMessage: Message = { 
+      role: "user", 
+      content: userMessage,
+      files: filePreviews.length > 0 ? filePreviews : undefined
+    };
     setMessages((prev) => [...prev, newUserMessage]);
     await saveMessage(currentConvId, "user", fullUserMessage);
 
@@ -247,21 +282,41 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    
     const validFiles = files.filter(
       (file) =>
-        file.type === "application/pdf" ||
+        allowedTypes.includes(file.type) ||
         file.type.startsWith("image/")
     );
 
     if (validFiles.length !== files.length) {
       toast({
         title: "Uwaga",
-        description: "Obsługiwane są tylko pliki PDF i obrazy",
+        description: "Obsługiwane są pliki: JPG, PNG, PDF, DOC, DOCX",
         variant: "destructive",
       });
     }
 
-    setUploadedFiles((prev) => [...prev, ...validFiles]);
+    // Check file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024;
+    const sizedFiles = validFiles.filter(file => {
+      if (file.size > maxSize) {
+        toast({
+          title: "Plik zbyt duży",
+          description: `${file.name} przekracza limit 10MB`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      return true;
+    });
+
+    setUploadedFiles((prev) => [...prev, ...sizedFiles]);
   };
 
   const removeFile = (index: number) => {
@@ -292,6 +347,26 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
                       : "bg-muted"
                   }`}
                 >
+                  {message.files && message.files.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {message.files.map((file, fileIndex) => (
+                        <div key={fileIndex} className="flex items-center gap-1 text-xs opacity-80">
+                          {file.preview ? (
+                            <img 
+                              src={file.preview} 
+                              alt={file.name}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          ) : (
+                            <>
+                              <FileText className="w-3 h-3" />
+                              <span>{file.name}</span>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                 </div>
               </div>
@@ -309,10 +384,10 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
                 key={index}
                 className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 text-sm"
               >
-                {file.type === "application/pdf" ? (
-                  <FileText className="w-4 h-4" />
-                ) : (
+                {file.type.startsWith("image/") ? (
                   <ImageIcon className="w-4 h-4" />
+                ) : (
+                  <FileText className="w-4 h-4" />
                 )}
                 <span className="truncate max-w-[150px]">{file.name}</span>
                 <button onClick={() => removeFile(index)}>
@@ -326,7 +401,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.doc,.docx"
             multiple
             className="hidden"
             onChange={handleFileUpload}
