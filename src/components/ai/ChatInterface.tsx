@@ -479,8 +479,31 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
+            title="Dodaj załącznik"
           >
             <Upload className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              const lastAssistantMessage = [...messages].reverse().find(
+                m => m.role === "assistant" && isDocumentContent(m.content)
+              );
+              if (lastAssistantMessage) {
+                exportToPdf(lastAssistantMessage.content);
+              } else {
+                toast({
+                  title: "Brak dokumentu",
+                  description: "Najpierw poproś AI o wygenerowanie dokumentu lub pisma",
+                  variant: "destructive",
+                });
+              }
+            }}
+            disabled={isLoading}
+            title="Eksportuj dokument do PDF"
+          >
+            <Download className="w-4 h-4" />
           </Button>
           <Input
             value={input}
