@@ -1,10 +1,29 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Valid document types
+const validDocumentTypes = [
+  "umowa_najmu",
+  "umowa_o_prace", 
+  "pelnomocnictwo",
+  "oswiadczenie",
+  "umowa_sprzedazy",
+  "umowa_zlecenia"
+] as const;
+
+// Input validation schema
+const requestSchema = z.object({
+  documentType: z.enum(validDocumentTypes, {
+    errorMap: () => ({ message: "Nieprawidłowy typ dokumentu" })
+  }),
+  details: z.string().min(10, "Szczegóły muszą mieć minimum 10 znaków").max(10000, "Szczegóły zbyt długie (max 10000 znaków)")
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,7 +57,19 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { documentType, details } = await req.json();
+    // Parse and validate input
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error("Validation error:", validation.error.issues);
+      return new Response(
+        JSON.stringify({ error: "Nieprawidłowe dane wejściowe", details: validation.error.issues }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { documentType, details } = validation.data;
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
 
     if (!GOOGLE_API_KEY) {
@@ -54,7 +85,7 @@ serve(async (req) => {
       umowa_zlecenia: "Wygeneruj umowę zlecenia zgodną z polskim Kodeksem cywilnym. Uwzględnij następujące informacje:",
     };
 
-    const prompt = templates[documentType] || templates.oswiadczenie;
+    const prompt = templates[documentType];
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_API_KEY}`,

@@ -1,10 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const messageSchema = z.object({
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.union([
+    z.string().min(1).max(50000),
+    z.array(z.object({
+      type: z.enum(["text", "image_url"]),
+      text: z.string().max(50000).optional(),
+      image_url: z.object({ url: z.string() }).optional()
+    }))
+  ])
+});
+
+const requestSchema = z.object({
+  messages: z.array(messageSchema).min(1).max(100)
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,7 +56,19 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { messages } = await req.json();
+    // Parse and validate input
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error("Validation error:", validation.error.issues);
+      return new Response(
+        JSON.stringify({ error: "Nieprawidłowe dane wejściowe", details: validation.error.issues }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { messages } = validation.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
