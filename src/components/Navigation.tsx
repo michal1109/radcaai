@@ -11,7 +11,9 @@ const Navigation = () => {
 
   const navLinks = [
     { href: "#services", label: "Funkcje" },
-    { href: "#about", label: "O asystencie" },
+    { href: "#how-it-works", label: "Jak to działa" },
+    { href: "#pricing", label: "Cennik" },
+    { href: "#faq", label: "FAQ" },
     { href: "#contact", label: "Kontakt" },
   ];
 
