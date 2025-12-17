@@ -1,10 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const requestSchema = z.object({
+  text: z.string().min(1, "Text is required").max(5000, "Text too long (max 5000 characters)"),
+  voiceId: z.string().regex(/^[a-zA-Z0-9_-]+$/, "Invalid voice ID format").max(50).optional()
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,15 +45,23 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { text, voiceId = "9BWtsMINqrJLrRacOk9x" } = await req.json();
+    // Parse and validate input
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error("Validation error:", validation.error.issues);
+      return new Response(
+        JSON.stringify({ error: "Nieprawidłowe dane wejściowe", details: validation.error.issues }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { text, voiceId = "9BWtsMINqrJLrRacOk9x" } = validation.data;
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
     if (!ELEVENLABS_API_KEY) {
       throw new Error("ELEVENLABS_API_KEY is not configured");
-    }
-
-    if (!text) {
-      throw new Error("Text is required");
     }
 
     const response = await fetch(

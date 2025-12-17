@@ -1,10 +1,43 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Max sizes
+const MAX_CONTENT_SIZE = 50000;
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // ~15MB base64 for ~10MB file
+
+// Valid analysis types
+const validAnalysisTypes = ["legal", "contract", "compliance"] as const;
+
+// Valid file types
+const validFileTypes = [
+  "image/jpeg",
+  "image/jpg", 
+  "image/png",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+] as const;
+
+// Input validation schema
+const requestSchema = z.object({
+  content: z.string().max(MAX_CONTENT_SIZE, "Content too long").optional(),
+  fileContent: z.string().max(MAX_FILE_SIZE, "File too large (max 10MB)").optional(),
+  fileType: z.enum(validFileTypes, {
+    errorMap: () => ({ message: "Nieprawidłowy typ pliku" })
+  }).optional(),
+  analysisType: z.enum(validAnalysisTypes, {
+    errorMap: () => ({ message: "Nieprawidłowy typ analizy" })
+  }).default("legal")
+}).refine(
+  (data) => data.content || data.fileContent,
+  { message: "Wymagana jest treść dokumentu lub plik" }
+);
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,15 +71,23 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { content, analysisType, fileContent, fileType } = await req.json();
+    // Parse and validate input
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error("Validation error:", validation.error.issues);
+      return new Response(
+        JSON.stringify({ error: "Nieprawidłowe dane wejściowe", details: validation.error.issues }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { content, analysisType, fileContent, fileType } = validation.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
-    if (!content && !fileContent) {
-      throw new Error("Document content or file is required");
     }
 
     const prompts: Record<string, string> = {
@@ -55,7 +96,7 @@ serve(async (req) => {
       compliance: "Sprawdź zgodność poniższego dokumentu z polskim prawem, wskazując obszary wymagające poprawy lub doprecyzowania.",
     };
 
-    const prompt = prompts[analysisType] || prompts.legal;
+    const prompt = prompts[analysisType];
 
     // Build messages array based on content type
     const messages: any[] = [

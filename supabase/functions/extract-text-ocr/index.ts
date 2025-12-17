@@ -1,10 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Max base64 size ~15MB (allows for ~10MB actual file)
+const MAX_BASE64_SIZE = 15 * 1024 * 1024;
+
+// Input validation schema
+const requestSchema = z.object({
+  imageBase64: z.string()
+    .min(1, "Image is required")
+    .max(MAX_BASE64_SIZE, "Image too large (max 10MB)")
+    .refine(
+      (val) => val.startsWith("data:image/") || val.startsWith("data:application/pdf"),
+      "Invalid image format - must be a valid base64 image or PDF"
+    )
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,15 +53,23 @@ serve(async (req) => {
 
     console.log("OCR request from user:", user.id);
 
-    const { imageBase64 } = await req.json();
+    // Parse and validate input
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error("Validation error:", validation.error.issues);
+      return new Response(
+        JSON.stringify({ error: "Nieprawidłowe dane wejściowe", details: validation.error.issues }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { imageBase64 } = validation.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
-    if (!imageBase64) {
-      throw new Error("Image is required for OCR");
     }
 
     console.log("Calling Lovable AI for OCR extraction...");
