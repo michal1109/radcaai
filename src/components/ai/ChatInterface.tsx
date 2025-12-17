@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
+import { Loader2, Send, Upload, X, FileText, Image as ImageIcon, Download } from "lucide-react";
+import jsPDF from "jspdf";
 
 type UploadedFileData = {
   name: string;
@@ -323,6 +324,62 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const isDocumentContent = (content: string): boolean => {
+    const documentKeywords = [
+      "odwołanie", "wniosek", "pismo", "skarga", "pozew", "umowa",
+      "oświadczenie", "zawiadomienie", "wezwanie", "reklamacja",
+      "wypowiedzenie", "upoważnienie", "pełnomocnictwo"
+    ];
+    const lowerContent = content.toLowerCase();
+    const hasKeyword = documentKeywords.some(keyword => lowerContent.includes(keyword));
+    const hasStructure = content.includes("\n\n") && content.length > 300;
+    return hasKeyword && hasStructure;
+  };
+
+  const exportToPdf = (content: string) => {
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    const maxWidth = pageWidth - margin * 2;
+    const lineHeight = 6;
+    let yPosition = margin;
+
+    // Add Polish font support
+    pdf.setFont("helvetica");
+    pdf.setFontSize(11);
+
+    // Split content into lines
+    const lines = pdf.splitTextToSize(content, maxWidth);
+
+    lines.forEach((line: string) => {
+      if (yPosition + lineHeight > pageHeight - margin) {
+        pdf.addPage();
+        yPosition = margin;
+      }
+      pdf.text(line, margin, yPosition);
+      yPosition += lineHeight;
+    });
+
+    // Add footer with date
+    const date = new Date().toLocaleDateString("pl-PL");
+    pdf.setFontSize(8);
+    pdf.setTextColor(128, 128, 128);
+    pdf.text(`Wygenerowano: ${date} | Papuga AI`, margin, pageHeight - 10);
+
+    pdf.save("dokument-prawny.pdf");
+    
+    toast({
+      title: "Sukces",
+      description: "Dokument został pobrany jako PDF",
+    });
+  };
+
   return (
     <Card className="h-full flex flex-col">
       <ScrollArea className="flex-1 p-6">
@@ -368,6 +425,17 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
                     </div>
                   )}
                   <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                  {message.role === "assistant" && isDocumentContent(message.content) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 gap-2"
+                      onClick={() => exportToPdf(message.content)}
+                    >
+                      <Download className="w-4 h-4" />
+                      Pobierz PDF
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
