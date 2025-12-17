@@ -30,17 +30,22 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#about" className="hover:text-primary transition-colors">
-                  O asystencie
+                <a href="#how-it-works" className="hover:text-primary transition-colors">
+                  Jak to działa
                 </a>
               </li>
               <li>
-                <a href="#contact" className="hover:text-primary transition-colors">
-                  Kontakt
+                <a href="#pricing" className="hover:text-primary transition-colors">
+                  Cennik
                 </a>
               </li>
               <li>
-                <Link to="/ai-assistant" className="hover:text-primary transition-colors">
+                <a href="#faq" className="hover:text-primary transition-colors">
+                  FAQ
+                </a>
+              </li>
+              <li>
+                <Link to="/auth" className="hover:text-primary transition-colors">
                   Uruchom asystenta
                 </Link>
               </li>
@@ -87,7 +92,8 @@ const Footer = () => {
         <div className="border-t border-background/20 pt-8 text-center text-sm opacity-80">
           <p>&copy; {new Date().getFullYear()} Papuga - Asystent Prawny AI. Wszelkie prawa zastrzeżone.</p>
           <p className="mt-2 text-xs opacity-60">
-            Porady mają charakter informacyjny i nie zastępują konsultacji z prawnikiem
+            ⚠️ Papuga AI nie jest prawnikiem. Usługa ma charakter informacyjny i edukacyjny. 
+            Porady nie stanowią porady prawnej w rozumieniu przepisów prawa.
           </p>
         </div>
       </div>

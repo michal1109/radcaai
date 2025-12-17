@@ -9,7 +9,7 @@ import {
 const faqs = [
   {
     question: "Czy porady Papugi zastępują prawnika?",
-    answer: "Papuga AI jest asystentem prawnym, który pomaga zrozumieć podstawowe kwestie prawne i generować dokumenty. Jednak w skomplikowanych sprawach zalecamy konsultację z profesjonalnym prawnikiem. Papuga może być świetnym pierwszym krokiem do zrozumienia Twojej sytuacji prawnej."
+    answer: "Nie. Papuga AI to asystent informacyjny, który pomaga zrozumieć podstawowe kwestie prawne. Nie stanowi to porady prawnej w rozumieniu przepisów. W skomplikowanych sprawach, sprawach sądowych lub wymagających oficjalnego pisma prawnego zalecamy konsultację z radcą prawnym lub adwokatem. Papuga może być pierwszym krokiem do zrozumienia Twojej sytuacji."
   },
   {
     question: "Jak bezpieczne są moje dane?",

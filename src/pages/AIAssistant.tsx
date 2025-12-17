@@ -77,6 +77,10 @@ const AIAssistant = () => {
             <p className="text-muted-foreground mt-1">
               Zadawaj pytania, analizuj dokumenty i generuj pisma prawne
             </p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+              <span>⚠️</span>
+              Informacje mają charakter edukacyjny i nie zastępują porady prawnika
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button
