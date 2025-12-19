@@ -17,7 +17,7 @@ const plans = [
     ],
     icon: Star,
     popular: false,
-    buttonText: "Rozpocznij za darmo",
+    buttonText: "Zacznij za Darmo (5 pytań)",
     priceId: null
   },
   {
