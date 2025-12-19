@@ -1,8 +1,11 @@
-import { Check, Star, Zap, Crown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, Star, Zap, Crown, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const plans = [
   {
@@ -74,13 +77,89 @@ const plans = [
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [currentPriceId, setCurrentPriceId] = useState<string | null>(null);
 
-  const handleSelectPlan = (priceId: string | null) => {
-    if (priceId) {
-      navigate("/auth?redirect=/ai-assistant");
-    } else {
-      navigate("/auth");
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+      if (session?.user) {
+        checkSubscription();
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      if (session?.user) {
+        checkSubscription();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) throw error;
+      if (data?.price_id) {
+        setCurrentPriceId(data.price_id);
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
     }
+  };
+
+  const handleSelectPlan = async (priceId: string | null, planName: string) => {
+    if (!priceId) {
+      navigate("/auth");
+      return;
+    }
+
+    if (!user) {
+      // Store selected plan and redirect to auth
+      sessionStorage.setItem('selectedPriceId', priceId);
+      navigate("/auth?redirect=/ai-assistant");
+      return;
+    }
+
+    // User is logged in, create checkout session
+    setLoading(priceId);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Błąd",
+        description: error.message || "Nie udało się utworzyć sesji płatności",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const getButtonText = (plan: typeof plans[0]) => {
+    if (currentPriceId === plan.priceId) {
+      return "Twój aktualny plan";
+    }
+    return plan.buttonText;
+  };
+
+  const isCurrentPlan = (priceId: string | null) => {
+    return currentPriceId === priceId;
   };
 
   return (
@@ -105,13 +184,22 @@ const Pricing = () => {
               className={`relative transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${
                 plan.popular 
                   ? "border-2 border-primary shadow-lg scale-105" 
+                  : isCurrentPlan(plan.priceId)
+                  ? "border-2 border-green-500 shadow-lg"
                   : "border-border"
               }`}
             >
-              {plan.popular && (
+              {plan.popular && !isCurrentPlan(plan.priceId) && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <Badge className="bg-primary text-primary-foreground">
                     Najpopularniejszy
+                  </Badge>
+                </div>
+              )}
+              {isCurrentPlan(plan.priceId) && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-green-500 text-white">
+                    Twój plan
                   </Badge>
                 </div>
               )}
@@ -139,13 +227,17 @@ const Pricing = () => {
                 </ul>
                 <Button 
                   className={`w-full ${
-                    plan.popular 
+                    isCurrentPlan(plan.priceId)
+                      ? "bg-green-500 hover:bg-green-600"
+                      : plan.popular 
                       ? "bg-primary hover:bg-primary/90" 
                       : "bg-muted text-foreground hover:bg-muted/80"
                   }`}
-                  onClick={() => handleSelectPlan(plan.priceId)}
+                  onClick={() => handleSelectPlan(plan.priceId, plan.name)}
+                  disabled={loading === plan.priceId || isCurrentPlan(plan.priceId)}
                 >
-                  {plan.buttonText}
+                  {loading === plan.priceId && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {getButtonText(plan)}
                 </Button>
               </CardContent>
             </Card>

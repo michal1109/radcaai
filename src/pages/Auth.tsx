@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,15 +15,36 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  const handleCheckoutAfterLogin = async () => {
+    const selectedPriceId = sessionStorage.getItem('selectedPriceId');
+    if (selectedPriceId) {
+      sessionStorage.removeItem('selectedPriceId');
+      try {
+        const { data, error } = await supabase.functions.invoke('create-checkout', {
+          body: { priceId: selectedPriceId }
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.open(data.url, '_blank');
+        }
+      } catch (error) {
+        console.error('Checkout error:', error);
+      }
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/ai-assistant");
+        handleCheckoutAfterLogin();
+        const redirect = searchParams.get('redirect') || '/ai-assistant';
+        navigate(redirect);
       }
     });
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +61,9 @@ const Auth = () => {
           title: "Zalogowano pomyślnie",
           description: "Witaj ponownie!",
         });
-        navigate("/ai-assistant");
+        await handleCheckoutAfterLogin();
+        const redirect = searchParams.get('redirect') || '/ai-assistant';
+        navigate(redirect);
       } else {
         const { error } = await supabase.auth.signUp({
           email,
