@@ -1,4 +1,4 @@
-import { CheckCircle2, Bot, Brain, Shield } from "lucide-react";
+import { CheckCircle2, Bot, Brain, Shield, Database } from "lucide-react";
 import papuga1 from "@/assets/papuga-1.png";
 
 const advantages = [
@@ -41,6 +41,21 @@ const About = () => {
                 Nasz system wykorzystuje najnowsze modele językowe przeszkolone na polskim prawie, 
                 aby dostarczać precyzyjne porady, generować dokumenty prawne i analizować sprawy sądowe.
               </p>
+              
+              {/* Data Sources Section */}
+              <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
+                <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Database className="w-4 h-4 text-primary" />
+                  Źródła danych
+                </h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Dzienniki Ustaw RP (aktualizacja: grudzień 2024)</li>
+                  <li>• Orzecznictwo Sądu Najwyższego</li>
+                  <li>• Orzecznictwo Naczelnego Sądu Administracyjnego</li>
+                  <li>• Kodeksy i ustawy w wersji ujednoliconej</li>
+                  <li>• Komentarze prawnicze i doktryna</li>
+                </ul>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6 py-6">
