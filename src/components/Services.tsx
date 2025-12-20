@@ -69,7 +69,7 @@ const Services = () => {
             >
               <div className="absolute inset-0 bg-black/30" />
               <CardHeader className="relative z-10">
-                <div className="w-20 h-20 mx-auto mb-4">
+                <div className="w-32 h-32 mx-auto mb-4">
                   <img 
                     src={service.image} 
                     alt={service.title}
