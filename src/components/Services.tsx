@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import papuga1 from "@/assets/papuga-1.png";
 import papuga2 from "@/assets/papuga-2.png";
 import papuga3 from "@/assets/papuga-3.png";
+import feathersBg from "@/assets/feathers-button-bg.jpg";
 
 const services = [
   {
@@ -57,8 +58,13 @@ const Services = () => {
           {services.map((service, index) => (
             <Card 
               key={index} 
-              className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-delayed bg-primary/90 text-primary-foreground border-none cursor-pointer"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-delayed text-white border-none cursor-pointer overflow-hidden"
+              style={{ 
+                animationDelay: `${index * 100}ms`,
+                backgroundImage: `url(${feathersBg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
               onClick={() => handleCardClick(service.tab)}
             >
               <CardHeader>
@@ -72,7 +78,7 @@ const Services = () => {
                 <CardTitle className="text-2xl text-center">{service.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-base text-center text-primary-foreground/90">
+                <CardDescription className="text-base text-center text-white/90">
                   {service.description}
                 </CardDescription>
               </CardContent>
