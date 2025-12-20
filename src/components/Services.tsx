@@ -58,7 +58,7 @@ const Services = () => {
           {services.map((service, index) => (
             <Card 
               key={index} 
-              className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-delayed text-white border-none cursor-pointer overflow-hidden"
+              className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-delayed text-white border-none cursor-pointer overflow-hidden relative"
               style={{ 
                 animationDelay: `${index * 100}ms`,
                 backgroundImage: `url(${feathersBg})`,
@@ -67,7 +67,8 @@ const Services = () => {
               }}
               onClick={() => handleCardClick(service.tab)}
             >
-              <CardHeader>
+              <div className="absolute inset-0 bg-black/30" />
+              <CardHeader className="relative z-10">
                 <div className="w-20 h-20 mx-auto mb-4">
                   <img 
                     src={service.image} 
@@ -77,7 +78,7 @@ const Services = () => {
                 </div>
                 <CardTitle className="text-2xl text-center">{service.title}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative z-10">
                 <CardDescription className="text-base text-center text-white/90">
                   {service.description}
                 </CardDescription>
