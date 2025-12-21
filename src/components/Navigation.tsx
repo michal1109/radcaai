@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Bot } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import papugaLogo from "@/assets/papuga-logo-new.png";
 
 const Navigation = () => {
@@ -45,6 +46,7 @@ const Navigation = () => {
                 {link.label}
               </a>
             ))}
+            <ThemeToggle />
             <Link to="/auth">
               <Button variant="outline" className="gap-2">
                 <Bot className="w-4 h-4" />
@@ -61,12 +63,15 @@ const Navigation = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 text-foreground hover:text-primary transition-colors"
-          >
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 text-foreground hover:text-primary transition-colors"
+            >
+              {isOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}

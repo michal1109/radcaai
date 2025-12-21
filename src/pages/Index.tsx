@@ -12,6 +12,7 @@ import LegalDisclaimer from "@/components/LegalDisclaimer";
 import About from "@/components/About";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
+import FloatingChatbot from "@/components/FloatingChatbot";
 
 const Index = () => {
   return (
@@ -32,6 +33,7 @@ const Index = () => {
         <Contact />
       </main>
       <Footer />
+      <FloatingChatbot />
     </div>
   );
 };
