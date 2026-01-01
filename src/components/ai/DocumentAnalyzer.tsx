@@ -106,7 +106,9 @@ const DocumentAnalyzer = () => {
         });
       }
     } catch (error) {
-      console.error("OCR error:", error);
+      if (import.meta.env.DEV) {
+        console.error("OCR error:", error);
+      }
       toast({
         title: "Błąd OCR",
         description: "Nie udało się rozpoznać tekstu z obrazu",
@@ -152,7 +154,9 @@ const DocumentAnalyzer = () => {
         description: "Dokument został przeanalizowany",
       });
     } catch (error) {
-      console.error("Analysis error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Analysis error:", error);
+      }
       toast({
         title: "Błąd",
         description: "Nie udało się przeanalizować dokumentu",

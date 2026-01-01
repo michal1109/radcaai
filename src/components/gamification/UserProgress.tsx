@@ -144,7 +144,9 @@ const UserProgress = () => {
       setAchievements(updatedAchievements);
 
     } catch (error) {
-      console.error("Error loading user stats:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error loading user stats:", error);
+      }
     } finally {
       setLoading(false);
     }

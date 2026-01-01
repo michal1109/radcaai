@@ -41,7 +41,9 @@ const DocumentGenerator = () => {
         description: "Twój dokument jest gotowy",
       });
     } catch (error) {
-      console.error("Generation error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Generation error:", error);
+      }
       toast({
         title: "Błąd",
         description: "Nie udało się wygenerować dokumentu",
