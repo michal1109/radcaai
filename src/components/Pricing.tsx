@@ -108,7 +108,9 @@ const Pricing = () => {
         setCurrentPriceId(data.price_id);
       }
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error checking subscription:', error);
+      }
     }
   };
 
@@ -140,7 +142,9 @@ const Pricing = () => {
         throw new Error('No checkout URL returned');
       }
     } catch (error: any) {
-      console.error('Checkout error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Checkout error:', error);
+      }
       toast({
         title: "Błąd",
         description: error.message || "Nie udało się utworzyć sesji płatności",

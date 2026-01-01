@@ -31,7 +31,9 @@ const Auth = () => {
           window.open(data.url, '_blank');
         }
       } catch (error) {
-        console.error('Checkout error:', error);
+        if (import.meta.env.DEV) {
+          console.error('Checkout error:', error);
+        }
       }
     }
   };

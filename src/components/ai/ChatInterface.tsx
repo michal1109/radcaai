@@ -110,7 +110,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
         content,
       });
 
-    if (error) {
+    if (error && import.meta.env.DEV) {
       console.error("Error saving message:", error);
     }
   };

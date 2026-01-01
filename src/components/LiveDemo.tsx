@@ -125,7 +125,9 @@ const LiveDemo = () => {
       setDemoUsed(true);
 
     } catch (error) {
-      console.error("Demo error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Demo error:", error);
+      }
       toast({
         title: "Błąd",
         description: "Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.",

@@ -41,7 +41,9 @@ const VoiceAssistant = () => {
         description: "Odtwórz audio, aby usłyszeć odpowiedź",
       });
     } catch (error) {
-      console.error("Voice error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Voice error:", error);
+      }
       toast({
         title: "Błąd",
         description: "Nie udało się przetworzyć nagrania",

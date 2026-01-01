@@ -92,7 +92,9 @@ const DailyChallenge = () => {
       }));
 
     } catch (error) {
-      console.error("Error loading daily progress:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error loading daily progress:", error);
+      }
     } finally {
       setLoading(false);
     }
