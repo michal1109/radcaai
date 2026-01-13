@@ -37,7 +37,7 @@ const plans = [
     icon: Zap,
     popular: false,
     buttonText: "Wybierz Basic",
-    priceId: "price_1RXGwJG8RWnc6xpP4oojhC6j"
+    priceId: "price_1SehNgJtNsVNdfqW9sG3iHb9"
   },
   {
     name: "Pro",
@@ -54,7 +54,7 @@ const plans = [
     icon: Crown,
     popular: true,
     buttonText: "Wybierz Pro",
-    priceId: "price_1RXGx4G8RWnc6xpPgLSuiJ55"
+    priceId: "price_1SehQEJtNsVNdfqWJ2i0MvTY"
   },
   {
     name: "Premium",
@@ -71,7 +71,7 @@ const plans = [
     icon: Crown,
     popular: false,
     buttonText: "Wybierz Premium",
-    priceId: "price_1RXGxeG8RWnc6xpPkUVdFrVG"
+    priceId: "price_1SpFQdJtNsVNdfqWdaFhqkma"
   }
 ];
 
