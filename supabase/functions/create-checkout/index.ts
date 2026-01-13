@@ -59,7 +59,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/ai-assistant?success=true`,
+      success_url: `${origin}/payment-success`,
       cancel_url: `${origin}/?canceled=true`,
     });
     
