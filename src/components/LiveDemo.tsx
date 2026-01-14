@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,6 +9,16 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DEMO_STORAGE_KEY = "papuga_demo_used";
+
+// Generate a unique session ID
+const getSessionId = (): string => {
+  let sessionId = sessionStorage.getItem("papuga_session_id");
+  if (!sessionId) {
+    sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    sessionStorage.setItem("papuga_session_id", sessionId);
+  }
+  return sessionId;
+};
 
 const exampleQuestions = [
   "Jak wypowiedzieć umowę najmu?",
@@ -75,49 +85,33 @@ const LiveDemo = () => {
     }
 
     try {
-      const response = await supabase.functions.invoke("chat-ai", {
-        body: {
-          messages: [{ role: "user", content: question }],
-          isDemo: true,
+      // Use the dedicated demo endpoint (no auth required)
+      const response = await supabase.functions.invoke("chat-ai-demo", {
+        body: { question },
+        headers: {
+          "x-session-id": getSessionId(),
         },
       });
 
       if (response.error) {
+        // Check if it's a rate limit error
+        if (response.error.message?.includes("429") || response.error.message?.includes("Demo już wykorzystane")) {
+          localStorage.setItem(DEMO_STORAGE_KEY, "true");
+          setDemoUsed(true);
+          toast({
+            title: "Demo wykorzystane",
+            description: "Zarejestruj się, aby uzyskać 5 darmowych pytań!",
+          });
+          return;
+        }
         throw new Error(response.error.message);
       }
 
-      // Handle streaming response
-      const reader = response.data?.getReader?.();
-      if (reader) {
-        const decoder = new TextDecoder();
-        let fullAnswer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ") && line !== "data: [DONE]") {
-              try {
-                const data = JSON.parse(line.slice(6));
-                const content = data.choices?.[0]?.delta?.content;
-                if (content) {
-                  fullAnswer += content;
-                  setAnswer(fullAnswer);
-                }
-              } catch {
-                // Ignore parsing errors
-              }
-            }
-          }
-        }
-      } else if (response.data?.content) {
+      // Handle JSON response from demo endpoint
+      if (response.data?.content) {
         setAnswer(response.data.content);
-      } else if (typeof response.data === "string") {
-        setAnswer(response.data);
+      } else if (response.data?.error) {
+        throw new Error(response.data.error);
       }
 
       // Mark demo as used

@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_rate_limits: {
+        Row: {
+          id: string
+          ip_hash: string
+          question_hash: string
+          session_id: string
+          used_at: string
+        }
+        Insert: {
+          id?: string
+          ip_hash: string
+          question_hash: string
+          session_id: string
+          used_at?: string
+        }
+        Update: {
+          id?: string
+          ip_hash?: string
+          question_hash?: string
+          session_id?: string
+          used_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           content: string
@@ -79,6 +103,36 @@ export type Database = {
           },
         ]
       }
+      faq_cache: {
+        Row: {
+          answer: string
+          created_at: string
+          hit_count: number
+          id: string
+          question_hash: string
+          question_text: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          hit_count?: number
+          id?: string
+          question_hash: string
+          question_text: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          hit_count?: number
+          id?: string
+          question_hash?: string
+          question_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           audio_url: string | null
@@ -113,6 +167,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      newsletter_subscribers: {
+        Row: {
+          email: string
+          id: string
+          is_active: boolean
+          source: string
+          subscribed_at: string
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          is_active?: boolean
+          source?: string
+          subscribed_at?: string
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          is_active?: boolean
+          source?: string
+          subscribed_at?: string
+          unsubscribed_at?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -191,6 +272,33 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_usage: {
+        Row: {
+          created_at: string
+          id: string
+          messages_count: number
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          messages_count?: number
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          messages_count?: number
+          updated_at?: string
+          usage_date?: string
           user_id?: string
         }
         Relationships: []

@@ -21,6 +21,20 @@ function getCorsHeaders(request: Request): Record<string, string> {
   };
 }
 
+// Helper function for logging
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[CHAT-AI] ${step}${detailsStr}`);
+};
+
+// Plan limits configuration
+const TIER_LIMITS: Record<string, number> = {
+  free: 5,
+  basic: 50,
+  pro: 200,
+  premium: -1, // unlimited
+};
+
 // Input validation schema
 const messageSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
@@ -61,23 +75,79 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
-      console.error("Auth error:", authError);
+      logStep("Auth error", { error: authError?.message });
       return new Response(JSON.stringify({ error: "Nieautoryzowany dostęp" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Authenticated user:", user.id);
+    logStep("Authenticated user", { userId: user.id });
+
+    // Check user's subscription tier
+    const { data: subscription } = await supabaseAdmin
+      .from("subscriptions")
+      .select("tier")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single();
+
+    const tier = subscription?.tier || "free";
+    const limit = TIER_LIMITS[tier] || 5;
+
+    logStep("User tier", { tier, limit });
+
+    // Check today's usage (skip for premium/unlimited users)
+    if (limit !== -1) {
+      const today = new Date().toISOString().split("T")[0];
+      
+      const { data: usage } = await supabaseAdmin
+        .from("user_usage")
+        .select("messages_count, id")
+        .eq("user_id", user.id)
+        .eq("usage_date", today)
+        .single();
+
+      const currentCount = usage?.messages_count || 0;
+
+      if (currentCount >= limit) {
+        logStep("Usage limit exceeded", { currentCount, limit, tier });
+        return new Response(
+          JSON.stringify({ 
+            error: `Osiągnięto dzienny limit ${limit} wiadomości dla planu ${tier}. Ulepsz plan, aby uzyskać więcej!` 
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Increment usage counter
+      if (usage) {
+        await supabaseAdmin
+          .from("user_usage")
+          .update({ messages_count: currentCount + 1 })
+          .eq("id", usage.id);
+      } else {
+        await supabaseAdmin
+          .from("user_usage")
+          .insert({ user_id: user.id, usage_date: today, messages_count: 1 });
+      }
+
+      logStep("Usage incremented", { newCount: currentCount + 1 });
+    }
 
     // Parse and validate input
     const body = await req.json();
     const validation = requestSchema.safeParse(body);
     
     if (!validation.success) {
-      console.error("Validation error:", validation.error.issues);
+      logStep("Validation error", { errors: validation.error.issues });
       return new Response(
         JSON.stringify({ error: "Nieprawidłowe dane wejściowe" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -88,7 +158,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY is not configured");
+      logStep("LOVABLE_API_KEY is not configured");
       return new Response(
         JSON.stringify({ error: "Usługa tymczasowo niedostępna." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -118,7 +188,7 @@ Pamiętaj, że Twoje porady mają charakter informacyjny i nie zastępują profe
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
+      logStep("AI Gateway error", { status: response.status, error: errorText });
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Przekroczono limit zapytań. Spróbuj ponownie za chwilę." }), {
@@ -143,7 +213,8 @@ Pamiętaj, że Twoje porady mają charakter informacyjny i nie zastępują profe
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
-    console.error("chat error:", e);
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    logStep("Chat error", { error: errorMessage });
     return new Response(
       JSON.stringify({ error: "Wystąpił błąd. Spróbuj ponownie później." }),
       {

@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ConversationHistory from "@/components/ConversationHistory";
 import ChatInterface from "@/components/ai/ChatInterface";
+import SubscriptionManager from "@/components/SubscriptionManager";
 
 import DocumentAnalyzer from "@/components/ai/DocumentAnalyzer";
 import DocumentGenerator from "@/components/ai/DocumentGenerator";
@@ -99,8 +100,9 @@ const AIAssistant = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[calc(100vh-200px)]">
-          {/* Sidebar - History */}
-          <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block md:col-span-1`}>
+          {/* Sidebar - History & Subscription */}
+          <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block md:col-span-1 space-y-4 overflow-y-auto`}>
+            <SubscriptionManager />
             <ConversationHistory
               onSelectConversation={handleSelectConversation}
               onNewConversation={handleNewConversation}

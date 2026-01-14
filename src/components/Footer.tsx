@@ -1,10 +1,16 @@
 import { Bot, Phone, Mail, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
+import NewsletterSignup from "./NewsletterSignup";
 
 const Footer = () => {
   return (
     <footer className="bg-foreground text-background py-12">
       <div className="container mx-auto px-4">
+        {/* Newsletter Section */}
+        <div className="max-w-md mx-auto mb-12">
+          <NewsletterSignup source="footer" />
+        </div>
+
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="space-y-4">
