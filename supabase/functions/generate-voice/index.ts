@@ -2,10 +2,24 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.23.8";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// CORS configuration
+const allowedOrigins = [
+  "https://radcaai.lovable.app",
+  "https://id-preview--1ff3e7d4-6fce-45f4-946d-e754f87165c8.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:8080"
+];
+
+function getCorsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("origin") || "";
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 // Input validation schema
 const requestSchema = z.object({
@@ -14,6 +28,8 @@ const requestSchema = z.object({
 });
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -52,7 +68,7 @@ serve(async (req) => {
     if (!validation.success) {
       console.error("Validation error:", validation.error.issues);
       return new Response(
-        JSON.stringify({ error: "Nieprawidłowe dane wejściowe", details: validation.error.issues }),
+        JSON.stringify({ error: "Nieprawidłowe dane wejściowe" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -61,7 +77,11 @@ serve(async (req) => {
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
     if (!ELEVENLABS_API_KEY) {
-      throw new Error("ELEVENLABS_API_KEY is not configured");
+      console.error("ELEVENLABS_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "Usługa tymczasowo niedostępna." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const response = await fetch(
@@ -87,7 +107,10 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.text();
       console.error("ElevenLabs error:", error);
-      throw new Error("Failed to generate voice");
+      return new Response(
+        JSON.stringify({ error: "Wystąpił błąd. Spróbuj ponownie później." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const arrayBuffer = await response.arrayBuffer();
@@ -111,10 +134,10 @@ serve(async (req) => {
   } catch (e) {
     console.error("generate-voice error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Wystąpił błąd. Spróbuj ponownie później." }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
