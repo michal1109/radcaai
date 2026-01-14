@@ -2,10 +2,24 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// CORS configuration
+const allowedOrigins = [
+  "https://radcaai.lovable.app",
+  "https://id-preview--1ff3e7d4-6fce-45f4-946d-e754f87165c8.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:8080"
+];
+
+function getCorsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("origin") || "";
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -13,6 +27,8 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -26,17 +42,43 @@ serve(async (req) => {
     logStep("Function started");
     
     const { priceId } = await req.json();
-    if (!priceId) throw new Error("Price ID is required");
+    if (!priceId) {
+      return new Response(JSON.stringify({ error: "Nieprawidłowe dane wejściowe" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     logStep("Price ID received", { priceId });
 
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Brak autoryzacji" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
+    if (!user?.email) {
+      return new Response(JSON.stringify({ error: "Nieautoryzowany dostęp" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      console.error("STRIPE_SECRET_KEY is not set");
+      return new Response(
+        JSON.stringify({ error: "Usługa tymczasowo niedostępna." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
@@ -47,7 +89,7 @@ serve(async (req) => {
       logStep("No existing customer, will create new one");
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = req.headers.get("origin") || "https://radcaai.lovable.app";
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -70,9 +112,8 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    console.error("create-checkout error:", error);
+    return new Response(JSON.stringify({ error: "Wystąpił błąd. Spróbuj ponownie później." }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
