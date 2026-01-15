@@ -15,6 +15,7 @@ const Navigation = () => {
     { href: "#how-it-works", label: "Jak to działa" },
     { href: "#pricing", label: "Cennik" },
     { href: "#faq", label: "FAQ" },
+    { href: "/blog", label: "Blog", isRoute: true },
     { href: "#contact", label: "Kontakt" },
   ];
 
@@ -38,13 +39,23 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             {isHomePage && navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-foreground hover:text-primary transition-colors font-medium"
-              >
-                {link.label}
-              </a>
+              link.isRoute ? (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="text-foreground hover:text-primary transition-colors font-medium"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-foreground hover:text-primary transition-colors font-medium"
+                >
+                  {link.label}
+                </a>
+              )
             ))}
             <ThemeToggle />
             <Link to="/auth">
@@ -78,14 +89,25 @@ const Navigation = () => {
         {isOpen && (
           <div className="md:hidden py-6 space-y-4 border-t border-border">
             {isHomePage && navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className="block text-foreground hover:text-primary transition-colors font-medium py-2"
-              >
-                {link.label}
-              </a>
+              link.isRoute ? (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className="block text-foreground hover:text-primary transition-colors font-medium py-2"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className="block text-foreground hover:text-primary transition-colors font-medium py-2"
+                >
+                  {link.label}
+                </a>
+              )
             ))}
             <Link to="/auth" onClick={() => setIsOpen(false)}>
               <Button variant="outline" className="w-full gap-2">

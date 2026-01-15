@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import AIAssistant from "./pages/AIAssistant";
 import Auth from "./pages/Auth";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import Blog from "./pages/Blog";
+import BlogArticle from "./pages/BlogArticle";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/ai-assistant" element={<AIAssistant />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:articleId" element={<BlogArticle />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
