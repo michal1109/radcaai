@@ -16,7 +16,7 @@ const plans = [
       "5 wiadomości dziennie",
       "Podstawowe porady prawne",
       "Dostęp do czatu AI",
-      "Analiza prostych dokumentów"
+      "Dokumenty za 7 PLN/szt."
     ],
     icon: Star,
     popular: false,
@@ -30,7 +30,7 @@ const plans = [
     features: [
       "50 wiadomości dziennie",
       "Rozszerzone porady prawne",
-      "Generowanie dokumentów",
+      "Generowanie podstawowych dokumentów",
       "Analiza dokumentów PDF i zdjęć",
       "Historia rozmów"
     ],
@@ -46,7 +46,7 @@ const plans = [
     features: [
       "200 wiadomości dziennie",
       "Pełne porady prawne",
-      "Wszystkie typy dokumentów",
+      "Wszystkie typy dokumentów w cenie",
       "Priorytetowa analiza",
       "Wzory pism prawnych",
       "Wsparcie email"
