@@ -1,4 +1,4 @@
-import { Bot, Phone, Mail, MessageSquare } from "lucide-react";
+import { Bot, Mail, MessageSquare, FileText, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import NewsletterSignup from "./NewsletterSignup";
 
@@ -63,14 +63,22 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Features */}
+          {/* Legal */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Funkcje AI</h3>
+            <h3 className="font-semibold text-lg mb-4">Informacje prawne</h3>
             <ul className="space-y-2 text-sm opacity-80">
-              <li>Porady prawne</li>
-              <li>Generowanie dokumentów</li>
-              <li>Analiza sprawy</li>
-              <li>Analiza dokumentów</li>
+              <li className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                <Link to="/regulamin" className="hover:text-primary transition-colors">
+                  Regulamin
+                </Link>
+              </li>
+              <li className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                <Link to="/polityka-prywatnosci" className="hover:text-primary transition-colors">
+                  Polityka Prywatności
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -79,15 +87,9 @@ const Footer = () => {
             <h3 className="font-semibold text-lg mb-4">Kontakt</h3>
             <ul className="space-y-3 text-sm opacity-80">
               <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                <a href="tel:+48123456789" className="hover:text-primary transition-colors">
-                  +48 123 456 789
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:kontakt@papuga-radca.pl" className="hover:text-primary transition-colors">
-                  kontakt@papuga-radca.pl
+                <a href="mailto:michal.plecha@vp.pl" className="hover:text-primary transition-colors">
+                  michal.plecha@vp.pl
                 </a>
               </li>
               <li className="flex items-center gap-2">
