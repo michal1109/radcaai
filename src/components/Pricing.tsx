@@ -16,7 +16,7 @@ const plans = [
       "5 wiadomości dziennie",
       "Podstawowe porady prawne",
       "Dostęp do czatu AI",
-      "Dokumenty za 7 PLN/szt."
+      "Generowanie dokumentów (opcja płatna)"
     ],
     icon: Star,
     popular: false,
