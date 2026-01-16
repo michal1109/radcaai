@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Mail, Clock } from "lucide-react";
 
 const Contact = () => {
   return (
@@ -24,43 +24,14 @@ const Contact = () => {
             <Card className="border-2">
               <CardHeader>
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-                  <Phone className="w-6 h-6 text-primary" />
-                </div>
-                <CardTitle className="text-lg">Telefon</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <a href="tel:+48123456789" className="text-foreground hover:text-primary transition-colors">
-                  +48 123 456 789
-                </a>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
                   <Mail className="w-6 h-6 text-primary" />
                 </div>
-                <CardTitle className="text-lg">Email</CardTitle>
+                <CardTitle className="text-lg">Kontakt e-mailowy</CardTitle>
               </CardHeader>
               <CardContent>
-                <a href="mailto:kontakt@papuga-radca.pl" className="text-foreground hover:text-primary transition-colors">
-                  kontakt@papuga-radca.pl
+                <a href="mailto:michal.plecha@vp.pl" className="text-foreground hover:text-primary transition-colors font-medium">
+                  michal.plecha@vp.pl
                 </a>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-                  <MapPin className="w-6 h-6 text-primary" />
-                </div>
-                <CardTitle className="text-lg">Adres</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-foreground">
-                  ul. Przykładowa 123<br />
-                  00-000 Warszawa
-                </p>
               </CardContent>
             </Card>
 
@@ -69,12 +40,12 @@ const Contact = () => {
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
                   <Clock className="w-6 h-6 text-primary" />
                 </div>
-                <CardTitle className="text-lg">Godziny otwarcia</CardTitle>
+                <CardTitle className="text-lg">Czas odpowiedzi</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-foreground">
-                  Pon - Pt: 9:00 - 17:00<br />
-                  Sob - Ndz: Zamknięte
+                  Odpowiadamy zazwyczaj<br />
+                  w ciągu 24 godzin
                 </p>
               </CardContent>
             </Card>
@@ -99,11 +70,6 @@ const Contact = () => {
                     <Label htmlFor="email">Email</Label>
                     <Input id="email" type="email" placeholder="jan@example.com" />
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefon</Label>
-                  <Input id="phone" type="tel" placeholder="+48 123 456 789" />
                 </div>
 
                 <div className="space-y-2">
