@@ -86,10 +86,10 @@ serve(async (req) => {
     }
 
     const { documentType, details } = validation.data;
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
-    if (!GOOGLE_API_KEY) {
-      console.error("GOOGLE_API_KEY is not configured");
+    if (!OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is not configured");
       return new Response(
         JSON.stringify({ error: "Usługa tymczasowo niedostępna." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -107,34 +107,46 @@ serve(async (req) => {
 
     const prompt = templates[documentType];
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `${prompt}\n\n${details}\n\nWygeneruj kompletny dokument w formacie tekstowym, gotowy do druku.`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 4096,
+    console.log("Calling OpenAI API for document generation...");
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "Jesteś ekspertem prawnym specjalizującym się w tworzeniu dokumentów prawnych zgodnych z polskim prawem. Generuj profesjonalne, kompletne dokumenty gotowe do użycia."
           },
-        }),
-      }
-    );
+          {
+            role: "user",
+            content: `${prompt}\n\n${details}\n\nWygeneruj kompletny dokument w formacie tekstowym, gotowy do druku.`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 4096,
+      }),
+    });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Przekroczono limit zapytań. Spróbuj ponownie za chwilę." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 401 || response.status === 402) {
+        return new Response(JSON.stringify({ error: "Problem z kluczem API. Skontaktuj się z administratorem." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const error = await response.text();
-      console.error("Gemini API error:", error);
+      console.error("OpenAI API error:", error);
       return new Response(
         JSON.stringify({ error: "Wystąpił błąd. Spróbuj ponownie później." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -142,7 +154,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const document = data.candidates[0]?.content?.parts[0]?.text || "Nie udało się wygenerować dokumentu.";
+    const document = data.choices?.[0]?.message?.content || "Nie udało się wygenerować dokumentu.";
 
     return new Response(
       JSON.stringify({ document }),

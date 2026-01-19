@@ -82,26 +82,26 @@ serve(async (req) => {
     }
 
     const { imageBase64 } = validation.data;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
-    if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY is not configured");
+    if (!OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is not configured");
       return new Response(
         JSON.stringify({ error: "Usługa tymczasowo niedostępna." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Calling Lovable AI for OCR extraction...");
+    console.log("Calling OpenAI API for OCR extraction...");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -131,14 +131,14 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Wymagana płatność. Dodaj środki do workspace." }), {
+      if (response.status === 401 || response.status === 402) {
+        return new Response(JSON.stringify({ error: "Problem z kluczem API. Skontaktuj się z administratorem." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const error = await response.text();
-      console.error("Lovable AI OCR error:", error);
+      console.error("OpenAI API OCR error:", error);
       return new Response(
         JSON.stringify({ error: "Wystąpił błąd. Spróbuj ponownie później." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
