@@ -31,19 +31,37 @@ const Navigation = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth?redirect=/ai-assistant`,
+          // In embedded previews (iframe), Google can block the auth page.
+          // We fetch the URL and open it in a new tab instead.
+          skipBrowserRedirect: true,
         },
       });
       if (error) throw error;
+
+      const url = data?.url;
+      if (!url) throw new Error("Nie udało się rozpocząć logowania Google.");
+
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        window.location.assign(url);
+        return;
+      }
+
+      toast({
+        title: "Otwieram logowanie Google",
+        description: "Sprawdź nową kartę przeglądarki.",
+      });
     } catch (error: any) {
       toast({
         title: "Błąd logowania",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
       setGoogleLoading(false);
     }
   };
