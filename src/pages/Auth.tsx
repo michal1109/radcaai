@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  const handleCheckoutAfterLogin = async () => {
+  const handleCheckoutAfterLogin = useCallback(async () => {
     const selectedPriceId = sessionStorage.getItem('selectedPriceId');
     if (selectedPriceId) {
       sessionStorage.removeItem('selectedPriceId');
@@ -37,17 +37,35 @@ const Auth = () => {
         }
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        handleCheckoutAfterLogin();
-        const redirect = searchParams.get('redirect') || '/ai-assistant';
+    let redirected = false;
+
+    const redirectIfAuthenticated = () => {
+      if (redirected) return;
+      redirected = true;
+
+      const redirect = searchParams.get('redirect') || '/ai-assistant';
+
+      // Defer async work away from the auth callback (avoids deadlocks)
+      setTimeout(() => {
+        void handleCheckoutAfterLogin();
         navigate(redirect);
-      }
+      }, 0);
+    };
+
+    // Listen FIRST, then check session (prevents missing the OAuth callback session)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) redirectIfAuthenticated();
     });
-  }, [navigate, searchParams]);
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) redirectIfAuthenticated();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, searchParams, handleCheckoutAfterLogin]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +120,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/ai-assistant`,
+          redirectTo: `${window.location.origin}/auth?redirect=/ai-assistant`,
         },
       });
       if (error) throw error;
