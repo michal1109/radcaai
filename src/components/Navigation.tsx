@@ -1,16 +1,26 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Bot, Loader2 } from "lucide-react";
+import { Menu, X, Bot, Loader2, LogOut, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import papugaLogo from "@/assets/papuga-logo-new.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -27,6 +37,40 @@ const Navigation = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Wylogowano",
+        description: "Do zobaczenia!",
+      });
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "Błąd wylogowania",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
+  const getUserInitials = () => {
+    const name = user?.user_metadata?.full_name || user?.email || "";
+    if (!name) return "U";
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const getUserDisplayName = () => {
+    return user?.user_metadata?.full_name || user?.email || "Użytkownik";
+  };
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
@@ -115,12 +159,57 @@ const Navigation = () => {
             ))}
             <ThemeToggle />
             {user ? (
-              <Link to="/ai-assistant">
-                <Button variant="outline" className="gap-2">
-                  <Bot className="w-4 h-4" />
-                  Asystent AI
-                </Button>
-              </Link>
+              <>
+                <Link to="/ai-assistant">
+                  <Button variant="outline" className="gap-2">
+                    <Bot className="w-4 h-4" />
+                    Asystent AI
+                  </Button>
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="gap-2 px-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.user_metadata?.avatar_url} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden lg:inline text-sm font-medium max-w-[150px] truncate">
+                        {getUserDisplayName()}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{user?.user_metadata?.full_name || "Użytkownik"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/ai-assistant" className="cursor-pointer">
+                        <Bot className="mr-2 h-4 w-4" />
+                        Asystent AI
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={handleLogout} 
+                      disabled={loggingOut}
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                    >
+                      {loggingOut ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogOut className="mr-2 h-4 w-4" />
+                      )}
+                      Wyloguj się
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <>
                 <Button 
@@ -151,7 +240,7 @@ const Navigation = () => {
             )}
             {isHomePage && !user && (
               <Link to="/auth">
-                <Button size="lg" className="bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,48%)]">
+                <Button size="lg" className="bg-primary hover:bg-primary/90">
                   Zacznij za Darmo
                 </Button>
               </Link>
@@ -195,12 +284,39 @@ const Navigation = () => {
               )
             ))}
             {user ? (
-              <Link to="/ai-assistant" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" className="w-full gap-2">
-                  <Bot className="w-4 h-4" />
-                  Asystent AI
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 px-2 py-3 bg-muted/50 rounded-lg">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{user?.user_metadata?.full_name || "Użytkownik"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                </div>
+                <Link to="/ai-assistant" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full gap-2">
+                    <Bot className="w-4 h-4" />
+                    Asystent AI
+                  </Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2 text-destructive hover:text-destructive"
+                  onClick={() => { handleLogout(); setIsOpen(false); }}
+                  disabled={loggingOut}
+                >
+                  {loggingOut ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <LogOut className="w-4 h-4" />
+                  )}
+                  Wyloguj się
                 </Button>
-              </Link>
+              </div>
             ) : (
               <>
                 <Button 
@@ -231,7 +347,7 @@ const Navigation = () => {
             )}
             {isHomePage && !user && (
               <Link to="/auth" onClick={() => setIsOpen(false)}>
-                <Button size="lg" className="w-full bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,48%)] mt-2">
+                <Button size="lg" className="w-full bg-primary hover:bg-primary/90 mt-2">
                   Zacznij za Darmo
                 </Button>
               </Link>
