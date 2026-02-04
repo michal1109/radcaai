@@ -5,13 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, Upload, X, FileText, Image as ImageIcon, Download } from "lucide-react";
+import { Loader2, Send, Upload, X, FileText, Image as ImageIcon, Download, AlertTriangle } from "lucide-react";
 import jsPDF from "jspdf";
+import LegalDisclaimer from "@/components/legal/LegalDisclaimer";
+import DocumentUploadWarning from "@/components/legal/DocumentUploadWarning";
+import ReactMarkdown from "react-markdown";
 
 type UploadedFileData = {
   name: string;
   type: string;
-  preview?: string; // Base64 preview for images
+  preview?: string;
 };
 
 type Message = {
@@ -32,6 +35,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [showUploadWarning, setShowUploadWarning] = useState(false);
   
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -156,7 +160,6 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     return previews;
   };
 
-
   const sendMessage = async () => {
     if ((!input.trim() && uploadedFiles.length === 0) || isLoading) return;
 
@@ -181,6 +184,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
       const documentAnalysis = await analyzeDocuments(uploadedFiles);
       fullUserMessage = `${userMessage}\n\nDokumenty do analizy:\n${documentAnalysis}`;
       setUploadedFiles([]);
+      setShowUploadWarning(false);
     }
 
     const newUserMessage: Message = { 
@@ -192,7 +196,6 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     await saveMessage(currentConvId, "user", fullUserMessage);
 
     try {
-      // Get user's session token for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error("Musisz być zalogowany, aby korzystać z czatu");
@@ -260,8 +263,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
                 return newMessages;
               });
             }
-          } catch (e) {
-            // Re-buffer partial JSON
+          } catch {
             textBuffer = line + "\n" + textBuffer;
             break;
           }
@@ -269,7 +271,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
       }
 
       await saveMessage(currentConvId, "assistant", assistantMessage);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Błąd",
         description: "Nie udało się uzyskać odpowiedzi",
@@ -303,7 +305,6 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
       });
     }
 
-    // Check file size (max 10MB)
     const maxSize = 10 * 1024 * 1024;
     const sizedFiles = validFiles.filter(file => {
       if (file.size > maxSize) {
@@ -317,11 +318,18 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
       return true;
     });
 
+    if (sizedFiles.length > 0) {
+      setShowUploadWarning(true);
+    }
     setUploadedFiles((prev) => [...prev, ...sizedFiles]);
   };
 
   const removeFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    setUploadedFiles((prev) => {
+      const newFiles = prev.filter((_, i) => i !== index);
+      if (newFiles.length === 0) setShowUploadWarning(false);
+      return newFiles;
+    });
   };
 
   const isDocumentContent = (content: string): boolean => {
@@ -348,35 +356,64 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     const margin = 20;
     const maxWidth = pageWidth - margin * 2;
     const lineHeight = 6;
-    let yPosition = margin;
+    let yPosition = margin + 15;
 
-    // Add Polish font support
+    // Add watermark
+    pdf.setFontSize(48);
+    pdf.setTextColor(200, 200, 200);
+    pdf.text("PROJEKT", pageWidth / 2, pageHeight / 2, { 
+      angle: 45, 
+      align: "center" 
+    });
+    pdf.setFontSize(24);
+    pdf.text("DO WERYFIKACJI PRAWNEJ", pageWidth / 2, pageHeight / 2 + 20, { 
+      angle: 45, 
+      align: "center" 
+    });
+
+    // Reset text color for content
+    pdf.setTextColor(0, 0, 0);
     pdf.setFont("helvetica");
     pdf.setFontSize(11);
 
-    // Split content into lines
+    // Add header warning
+    pdf.setFillColor(255, 243, 205);
+    pdf.rect(margin, margin, maxWidth, 12, "F");
+    pdf.setFontSize(9);
+    pdf.setTextColor(133, 100, 4);
+    pdf.text("⚠️ PROJEKT – DO WERYFIKACJI PRAWNEJ. Nie stanowi porady prawnej.", margin + 2, margin + 8);
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(11);
+
     const lines = pdf.splitTextToSize(content, maxWidth);
 
     lines.forEach((line: string) => {
-      if (yPosition + lineHeight > pageHeight - margin) {
+      if (yPosition + lineHeight > pageHeight - margin - 15) {
         pdf.addPage();
         yPosition = margin;
+        
+        // Add watermark to new page
+        pdf.setFontSize(48);
+        pdf.setTextColor(200, 200, 200);
+        pdf.text("PROJEKT", pageWidth / 2, pageHeight / 2, { angle: 45, align: "center" });
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(11);
       }
       pdf.text(line, margin, yPosition);
       yPosition += lineHeight;
     });
 
-    // Add footer with date
+    // Add footer
     const date = new Date().toLocaleDateString("pl-PL");
     pdf.setFontSize(8);
     pdf.setTextColor(128, 128, 128);
-    pdf.text(`Wygenerowano: ${date} | Papuga AI`, margin, pageHeight - 10);
+    pdf.text(`Wygenerowano: ${date} | RadcaAI - Dokument wymaga weryfikacji prawnej`, margin, pageHeight - 10);
 
-    pdf.save("dokument-prawny.pdf");
+    pdf.save("projekt-dokument-prawny.pdf");
     
     toast({
       title: "Sukces",
-      description: "Dokument został pobrany jako PDF",
+      description: "Dokument został pobrany jako PDF (z oznaczeniem PROJEKT)",
     });
   };
 
@@ -384,9 +421,16 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
     <Card className="h-full flex flex-col">
       <ScrollArea className="flex-1 p-6">
         {messages.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12">
-            <p className="text-lg mb-2">👋 Witaj w Papuga AI</p>
-            <p className="text-sm">Zadaj pytanie prawne, aby rozpocząć konsultację</p>
+          <div className="space-y-6 py-8">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                Witaj w RadcaAI
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                System wsparcia informacyjnego o polskim prawie
+              </p>
+            </div>
+            <LegalDisclaimer compact />
           </div>
         ) : (
           <div className="space-y-4">
@@ -424,7 +468,13 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
                       ))}
                     </div>
                   )}
-                  <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                  )}
                   {message.role === "assistant" && isDocumentContent(message.content) && (
                     <Button
                       variant="outline"
@@ -433,7 +483,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
                       onClick={() => exportToPdf(message.content)}
                     >
                       <Download className="w-4 h-4" />
-                      Pobierz PDF
+                      Pobierz PDF (projekt)
                     </Button>
                   )}
                 </div>
@@ -445,6 +495,9 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
       </ScrollArea>
 
       <div className="border-t p-4 space-y-3">
+        {showUploadWarning && (
+          <DocumentUploadWarning className="mb-2" />
+        )}
         {uploadedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {uploadedFiles.map((file, index) => (
@@ -509,7 +562,7 @@ const ChatInterface = ({ conversationId, onConversationCreated }: ChatInterfaceP
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-            placeholder="Zadaj pytanie prawne..."
+            placeholder="Zadaj pytanie o przepisy prawa..."
             disabled={isLoading}
             className="flex-1"
           />

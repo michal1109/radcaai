@@ -8,7 +8,7 @@ import Testimonials from "@/components/Testimonials";
 import Pricing from "@/components/Pricing";
 import ReferralProgram from "@/components/ReferralProgram";
 import FAQ from "@/components/FAQ";
-import LegalDisclaimer from "@/components/LegalDisclaimer";
+import LegalDisclaimer from "@/components/legal/LegalDisclaimer";
 import About from "@/components/About";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
@@ -28,7 +28,11 @@ const Index = () => {
         <Pricing />
         <ReferralProgram />
         <FAQ />
-        <LegalDisclaimer />
+        <section className="py-12 bg-muted/50">
+          <div className="container mx-auto px-4">
+            <LegalDisclaimer />
+          </div>
+        </section>
         <About />
         <Contact />
       </main>

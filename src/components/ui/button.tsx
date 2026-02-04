@@ -15,10 +15,6 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // Gradient buttons matching the reference design
-        gradientGreen: "bg-gradient-to-r from-[hsl(152,45%,35%)] to-[hsl(142,50%,45%)] text-white hover:from-[hsl(152,45%,30%)] hover:to-[hsl(142,50%,40%)] shadow-md hover:shadow-lg border-0",
-        gradientGold: "bg-gradient-to-r from-[hsl(35,60%,50%)] to-[hsl(40,70%,60%)] text-[hsl(30,30%,20%)] hover:from-[hsl(35,60%,45%)] hover:to-[hsl(40,70%,55%)] shadow-md hover:shadow-lg border-0 font-semibold",
-        gradientLight: "bg-gradient-to-r from-[hsl(0,0%,98%)] to-[hsl(0,0%,92%)] text-[hsl(152,40%,30%)] hover:from-[hsl(0,0%,95%)] hover:to-[hsl(0,0%,88%)] shadow-md hover:shadow-lg border border-[hsl(0,0%,85%)] font-semibold",
       },
       size: {
         default: "h-10 px-4 py-2",

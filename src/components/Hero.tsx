@@ -6,7 +6,7 @@ import { useRef } from "react";
 import feathersBg from "@/assets/feathers-bg-new.png";
 import papugaLogo from "@/assets/papuga-logo-lawyer.png";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
-import { Users, Star, Clock, CheckCircle, Loader2 } from "lucide-react";
+import { Users, Star, Clock, CheckCircle, Loader2, Scale, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,7 +14,7 @@ const stats = [
   { icon: Users, value: 12500, suffix: "+", label: "Użytkowników" },
   { icon: Star, value: 98, suffix: "%", label: "Zadowolonych" },
   { icon: Clock, value: 24, suffix: "/7", label: "Dostępność" },
-  { icon: CheckCircle, value: 50000, suffix: "+", label: "Rozwiązanych spraw" },
+  { icon: CheckCircle, value: 50000, suffix: "+", label: "Zapytań" },
 ];
 
 const Hero = () => {
@@ -38,8 +38,6 @@ const Hero = () => {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth?redirect=/ai-assistant`,
-          // In embedded previews (iframe), Google can block the auth page.
-          // We fetch the URL and open it in a new tab instead.
           skipBrowserRedirect: true,
         },
       });
@@ -50,7 +48,6 @@ const Hero = () => {
 
       const opened = window.open(url, "_blank", "noopener,noreferrer");
       if (!opened) {
-        // Fallback when popup is blocked
         window.location.assign(url);
         return;
       }
@@ -59,10 +56,11 @@ const Hero = () => {
         title: "Otwieram logowanie Google",
         description: "Sprawdź nową kartę przeglądarki.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Nieznany błąd";
       toast({
         title: "Błąd logowania",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -76,7 +74,7 @@ const Hero = () => {
       id="home" 
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* Parallax Background */}
+      {/* Parallax Background - Navy Blue Theme */}
       <motion.div
         className="absolute inset-0 z-0"
         style={{
@@ -88,7 +86,7 @@ const Hero = () => {
         }}
       />
       
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 z-[1]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[hsl(220,40%,15%)]/80 via-[hsl(220,40%,20%)]/70 to-[hsl(220,40%,15%)]/80 z-[1]" />
       
       <motion.div 
         className="container mx-auto px-4 relative z-10"
@@ -101,16 +99,33 @@ const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
+            <div className="flex items-center gap-2 justify-center lg:justify-start">
+              <Scale className="w-6 h-6 text-primary" />
+              <span className="text-white/80 text-sm font-medium uppercase tracking-wider">
+                System wsparcia informacyjnego
+              </span>
+            </div>
+            
             <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
-              Twój osobisty <br />
-              <span className="text-primary">asystent prawny</span><br />
-              dostępny 24/7
+              RadcaAI <br />
+              <span className="text-primary">Informacje prawne</span><br />
+              dostępne 24/7
             </h1>
+            
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl">
-              Uzyskaj profesjonalne porady prawne, generuj dokumenty i analizuj sprawy sądowe z pomocą sztucznej inteligencji opartej na polskim prawie
+              Uzyskaj ogólne informacje o polskim prawie, analizuj dokumenty i generuj 
+              robocze wersje pism z pomocą sztucznej inteligencji
             </p>
             
-            {/* CTA Buttons with gradient backgrounds */}
+            {/* Legal Notice */}
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 max-w-2xl">
+              <p className="text-sm text-white/80">
+                <strong className="text-white">⚠️ Informacja:</strong> RadcaAI dostarcza wyłącznie ogólnych 
+                informacji prawnych i nie stanowi porady prawnej. Odpowiedzi generowane przez AI mogą zawierać błędy.
+              </p>
+            </div>
+            
+            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link to="/auth">
                 <motion.div
@@ -119,8 +134,7 @@ const Hero = () => {
                 >
                   <Button 
                     size="lg" 
-                    variant="gradientGold"
-                    className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group"
+                    className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all relative overflow-hidden group"
                   >
                     <span className="relative z-10">Zacznij za Darmo (5 pytań)</span>
                     <motion.div 
@@ -138,10 +152,10 @@ const Hero = () => {
               >
                 <Button 
                   size="lg" 
-                  variant="gradientLight"
+                  variant="outline"
                   onClick={handleGoogleLogin}
                   disabled={googleLoading}
-                  className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all gap-3"
+                  className="text-lg px-8 py-6 bg-white hover:bg-white/90 text-foreground shadow-lg hover:shadow-xl transition-all gap-3 border-0"
                 >
                   {googleLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -163,12 +177,34 @@ const Hero = () => {
                 >
                   <Button 
                     size="lg" 
-                    variant="gradientGreen"
-                    className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
+                    variant="outline"
+                    className="text-lg px-8 py-6 border-2 border-white/50 text-white hover:bg-white/10 shadow-lg transition-all"
                   >
                     Wypróbuj Demo
                   </Button>
                 </motion.div>
+              </a>
+            </div>
+
+            {/* Find a Lawyer Links */}
+            <div className="flex flex-wrap gap-3 justify-center lg:justify-start pt-2">
+              <a 
+                href="https://www.adwokatura.pl/znajdz-adwokata/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-white/70 hover:text-primary transition-colors text-sm"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Znajdź adwokata (NRA)
+              </a>
+              <a 
+                href="https://rejestr.kirp.pl/home" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-white/70 hover:text-primary transition-colors text-sm"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Znajdź radcę prawnego (KIRP)
               </a>
             </div>
 
@@ -202,7 +238,7 @@ const Hero = () => {
             </motion.div>
           </motion.div>
           
-          {/* Animated Parrot Logo */}
+          {/* Animated Logo */}
           <motion.div 
             className="flex-1 flex justify-center lg:justify-end"
             initial={{ opacity: 0, scale: 0.8 }}
@@ -211,7 +247,7 @@ const Hero = () => {
           >
             <motion.img 
               src={papugaLogo} 
-              alt="Papuga - Prywatny Radca Prawny" 
+              alt="RadcaAI - System wsparcia informacyjnego" 
               className="w-full max-w-md lg:max-w-lg drop-shadow-2xl"
               animate={{ 
                 y: [0, -15, 0],
