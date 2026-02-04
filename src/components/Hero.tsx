@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import feathersBg from "@/assets/feathers-bg-new.png";
-import papugaLogo from "@/assets/papuga-logo-new.png";
+import papugaLogo from "@/assets/papuga-logo-lawyer.png";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { Users, Star, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,7 +110,7 @@ const Hero = () => {
               Uzyskaj profesjonalne porady prawne, generuj dokumenty i analizuj sprawy sądowe z pomocą sztucznej inteligencji opartej na polskim prawie
             </p>
             
-            {/* CTA Buttons with enhanced animations */}
+            {/* CTA Buttons with gradient backgrounds */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link to="/auth">
                 <motion.div
@@ -119,7 +119,8 @@ const Hero = () => {
                 >
                   <Button 
                     size="lg" 
-                    className="text-lg px-8 py-6 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,48%)] text-white shadow-lg hover:shadow-xl transition-all relative overflow-hidden group"
+                    variant="gradientGold"
+                    className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group"
                   >
                     <span className="relative z-10">Zacznij za Darmo (5 pytań)</span>
                     <motion.div 
@@ -137,9 +138,10 @@ const Hero = () => {
               >
                 <Button 
                   size="lg" 
+                  variant="gradientLight"
                   onClick={handleGoogleLogin}
                   disabled={googleLoading}
-                  className="text-lg px-8 py-6 bg-white hover:bg-gray-100 text-gray-800 shadow-lg hover:shadow-xl transition-all gap-3"
+                  className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all gap-3"
                 >
                   {googleLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -161,8 +163,8 @@ const Hero = () => {
                 >
                   <Button 
                     size="lg" 
-                    variant="outline" 
-                    className="text-lg px-8 py-6 border-2 bg-transparent hover:bg-white/10 text-white border-white/50 hover:border-white shadow-lg transition-all"
+                    variant="gradientGreen"
+                    className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
                   >
                     Wypróbuj Demo
                   </Button>

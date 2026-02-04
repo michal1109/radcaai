@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Bot, Loader2, LogOut, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import papugaLogo from "@/assets/papuga-logo-new.png";
+import papugaLogo from "@/assets/papuga-logo-lawyer.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
