@@ -6,22 +6,32 @@ import Footer from "@/components/Footer";
 import ConversationHistory from "@/components/ConversationHistory";
 import ChatInterface from "@/components/ai/ChatInterface";
 import SubscriptionManager from "@/components/SubscriptionManager";
-
 import DocumentAnalyzer from "@/components/ai/DocumentAnalyzer";
 import DocumentGenerator from "@/components/ai/DocumentGenerator";
+import KnowledgeBase from "@/components/legal/KnowledgeBase";
+import TermsAcceptance from "@/components/legal/TermsAcceptance";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const AIAssistant = () => {
   const [user, setUser] = useState<any>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get("tab") || "chat";
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check localStorage for terms acceptance
+    const accepted = localStorage.getItem("radcaai_terms_accepted");
+    if (accepted === "true") {
+      setTermsAccepted(true);
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -63,7 +73,29 @@ const AIAssistant = () => {
     setSidebarOpen(false);
   };
 
+  const handleTermsAccepted = () => {
+    localStorage.setItem("radcaai_terms_accepted", "true");
+    setTermsAccepted(true);
+  };
+
+  const lawyerLinks = [
+    { name: "Znajdź adwokata (NRA)", url: "https://www.adwokatura.pl/znajdz-adwokata/" },
+    { name: "Znajdź radcę (KIRP)", url: "https://rejestr.kirp.pl/home" },
+  ];
+
   if (!user) return null;
+
+  if (!termsAccepted) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <div className="flex-1 container mx-auto px-4 py-8 mt-20 flex items-center justify-center">
+          <TermsAcceptance onAccept={handleTermsAccepted} />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -72,18 +104,32 @@ const AIAssistant = () => {
       <div className="flex-1 container mx-auto px-4 py-8 mt-20">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Papuga AI - Asystent Prawny
+            <h1 className="text-3xl font-bold text-primary">
+              RadcaAI
             </h1>
             <p className="text-muted-foreground mt-1">
-              Zadawaj pytania, analizuj dokumenty i generuj pisma prawne
+              System wsparcia informacyjnego o polskim prawie
             </p>
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-              <span>⚠️</span>
-              Informacje mają charakter edukacyjny i nie zastępują porady prawnika
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <span>ℹ️</span>
+              Informacje mają charakter edukacyjny i nie stanowią porady prawnej
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {lawyerLinks.map((link) => (
+              <Button
+                key={link.name}
+                variant="outline"
+                size="sm"
+                asChild
+                className="hidden md:flex gap-1"
+              >
+                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-3 h-3" />
+                  {link.name}
+                </a>
+              </Button>
+            ))}
             <Button
               variant="outline"
               size="icon"
@@ -94,7 +140,7 @@ const AIAssistant = () => {
             </Button>
             <Button variant="outline" onClick={handleLogout} className="gap-2">
               <LogOut className="w-4 h-4" />
-              Wyloguj
+              <span className="hidden sm:inline">Wyloguj</span>
             </Button>
           </div>
         </div>
@@ -113,10 +159,11 @@ const AIAssistant = () => {
           {/* Main Content */}
           <div className="md:col-span-3">
             <Tabs defaultValue={defaultTab} className="h-full">
-              <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsList className="grid w-full grid-cols-4 mb-4">
                 <TabsTrigger value="chat">Czat AI</TabsTrigger>
                 <TabsTrigger value="analyze">Analiza</TabsTrigger>
                 <TabsTrigger value="generate">Generuj</TabsTrigger>
+                <TabsTrigger value="knowledge">Baza Wiedzy</TabsTrigger>
               </TabsList>
 
               <TabsContent value="chat" className="h-[calc(100%-60px)]">
@@ -132,6 +179,10 @@ const AIAssistant = () => {
 
               <TabsContent value="generate" className="h-[calc(100%-60px)]">
                 <DocumentGenerator />
+              </TabsContent>
+
+              <TabsContent value="knowledge" className="h-[calc(100%-60px)] overflow-y-auto">
+                <KnowledgeBase />
               </TabsContent>
             </Tabs>
           </div>

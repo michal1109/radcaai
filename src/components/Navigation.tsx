@@ -127,12 +127,12 @@ const Navigation = () => {
           <Link to="/" className="flex items-center gap-3 group">
             <img 
               src={papugaLogo} 
-              alt="Papuga Logo" 
+              alt="RadcaAI Logo" 
               className="h-24 w-auto transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 group-hover:drop-shadow-[0_0_20px_hsl(var(--primary)/0.6)]"
             />
             <div className="hidden sm:block">
-              <p className="font-bold text-lg text-foreground leading-tight">Papuga</p>
-              <p className="text-xs text-muted-foreground">Radca Prawny</p>
+              <p className="font-bold text-lg text-foreground leading-tight">RadcaAI</p>
+              <p className="text-xs text-muted-foreground">Wsparcie informacyjne</p>
             </div>
           </Link>
 
@@ -163,7 +163,7 @@ const Navigation = () => {
                 <Link to="/ai-assistant">
                   <Button variant="outline" className="gap-2">
                     <Bot className="w-4 h-4" />
-                    Asystent AI
+                    RadcaAI
                   </Button>
                 </Link>
                 <DropdownMenu>
@@ -191,7 +191,7 @@ const Navigation = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/ai-assistant" className="cursor-pointer">
                         <Bot className="mr-2 h-4 w-4" />
-                        Asystent AI
+                        RadcaAI
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -300,7 +300,7 @@ const Navigation = () => {
                 <Link to="/ai-assistant" onClick={() => setIsOpen(false)}>
                   <Button variant="outline" className="w-full gap-2">
                     <Bot className="w-4 h-4" />
-                    Asystent AI
+                    RadcaAI
                   </Button>
                 </Link>
                 <Button 
