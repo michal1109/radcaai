@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import feathersBg from "@/assets/feathers-bg-new.png";
-import papugaLogo from "@/assets/papuga-logo-lawyer.png";
+import papugaLogo from "@/assets/papuga-logo-new.png";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { Users, Star, Clock, CheckCircle, Loader2, Scale, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,7 +86,7 @@ const Hero = () => {
         }}
       />
       
-      <div className="absolute inset-0 bg-gradient-to-b from-[hsl(220,40%,15%)]/80 via-[hsl(220,40%,20%)]/70 to-[hsl(220,40%,15%)]/80 z-[1]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[hsl(140,35%,18%)]/85 via-[hsl(140,30%,22%)]/75 to-[hsl(140,35%,18%)]/85 z-[1]" />
       
       <motion.div 
         className="container mx-auto px-4 relative z-10"
@@ -248,7 +248,7 @@ const Hero = () => {
             <motion.img 
               src={papugaLogo} 
               alt="RadcaAI - System wsparcia informacyjnego" 
-              className="w-full max-w-md lg:max-w-lg drop-shadow-2xl"
+              className="w-full max-w-lg lg:max-w-2xl drop-shadow-2xl"
               animate={{ 
                 y: [0, -15, 0],
               }}
