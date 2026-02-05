@@ -248,7 +248,7 @@ const Hero = () => {
             <motion.img 
               src={papugaLogo} 
               alt="RadcaAI - System wsparcia informacyjnego" 
-              className="w-full max-w-xl lg:max-w-3xl xl:max-w-4xl drop-shadow-2xl"
+              className="w-full max-w-2xl lg:max-w-4xl xl:max-w-5xl drop-shadow-2xl"
               animate={{ 
                 y: [0, -15, 0],
               }}
