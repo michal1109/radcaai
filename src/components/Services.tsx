@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import papuga1 from "@/assets/papuga-1.png";
 import papuga2 from "@/assets/papuga-2.png";
 import papuga3 from "@/assets/papuga-3.png";
+import papuga4 from "@/assets/papuga-4.png";
 import feathersBg from "@/assets/feathers-button-bg.jpg";
 
 const services = [
@@ -23,7 +24,7 @@ const services = [
   },
   {
     icon: FileText,
-    image: papuga2,
+    image: papuga4,
     title: "Generowanie dokumentów",
     description: "Twórz pozwy, wnioski i inne dokumenty prawne",
     longDescription: "Automatycznie generuj profesjonalne dokumenty prawne dostosowane do Twojej sytuacji. Oszczędź czas i pieniądze na wizytach u prawnika.",
@@ -43,7 +44,7 @@ const services = [
   },
   {
     icon: Phone,
-    image: papuga1,
+    image: papuga2,
     title: "Analiza dokumentów",
     description: "Prześlij dokumenty w formie zdjęć lub PDF do analizy",
     longDescription: "Wyślij zdjęcie lub PDF dokumentu, a AI przeanalizuje jego treść i wyjaśni znaczenie poszczególnych klauzul oraz potencjalne ryzyka.",

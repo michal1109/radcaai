@@ -1,5 +1,5 @@
 import { CheckCircle2, Bot, Brain, Shield, Database } from "lucide-react";
-import papuga1 from "@/assets/papuga-1.png";
+import papuga3 from "@/assets/papuga-3.png";
 
 const advantages = [
   "Dostępność 24 godziny na dobę, 7 dni w tygodniu",
@@ -20,7 +20,7 @@ const About = () => {
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl" />
               <img 
-                src={papuga1} 
+                src={papuga3} 
                 alt="Papuga - Asystent AI" 
                 className="relative w-full max-w-md h-auto drop-shadow-2xl rounded-2xl"
               />
